@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
 
 import { User } from "@/types";
 import { sucessToast, errorToast } from "@/lib/toast";
@@ -51,6 +57,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   };
 
+  useEffect(() => {
+    recoverUser();
+  }, []);
+
   const login = async (email: string, pass: string) => {
     setLoginLoading(true);
 
@@ -60,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         pass,
       );
-      const loggedUser = mapFirebaseUser(userCredential.user);
+      const loggedUser = mapFirebaseUser(userCredential.user, true);
 
       localStorage.setItem("user", JSON.stringify(loggedUser));
       setUser(loggedUser);
@@ -104,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setGoogleLoading(true);
     try {
       const userCredential = await signInWithPopup(auth, googleProvider);
-      const loggedUser = mapFirebaseUser(userCredential.user);
+      const loggedUser = mapFirebaseUser(userCredential.user, false);
 
       localStorage.setItem("user", JSON.stringify(loggedUser));
       setUser(loggedUser);
@@ -133,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setGithubLoading(true);
     try {
       const userCredential = await signInWithPopup(auth, githubProvider);
-      const loggedUser = mapFirebaseUser(userCredential.user);
+      const loggedUser = mapFirebaseUser(userCredential.user, false);
 
       localStorage.setItem("user", JSON.stringify(loggedUser));
       setUser(loggedUser);
