@@ -24,15 +24,58 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { sucessToast, errorToast } from "@/lib/toast";
+import { auth } from "@/firebase/firebase-config";
+import {
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+} from "firebase/auth";
 
 import { IoFilter } from "react-icons/io5";
+import { FaUserLarge } from "react-icons/fa6";
 
 export default function Content() {
+  const currentUser = auth.currentUser;
+
   const { user, loading, logout } = useAuth();
 
   const [view, setView] = useState<"cards" | "board">("cards");
   const [showFilters, setShowFilters] = useState(false);
+
+  const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!user) return;
+
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const oldPassword = formData.get("oldPassword") as string;
+    const newPassword = formData.get("newPassword") as string;
+    const confirmNewPassword = formData.get("confirmNewPassword") as string;
+
+    if (!user.defaultLogin) {
+      errorToast("Não é possível alterar o perfil");
+      return;
+    }
+
+    try {
+      if (oldPassword && newPassword && confirmNewPassword) {
+        if (newPassword !== confirmNewPassword) {
+          errorToast("As senhas não coincidem");
+          return;
+        }
+
+        if (currentUser) {
+          await updatePassword(currentUser, newPassword);
+          sucessToast("Senha alterada com sucesso");
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      errorToast("Erro ao alterar senha");
+    }
+  };
 
   return (
     <>
@@ -77,7 +120,7 @@ export default function Content() {
               <SheetTrigger asChild>
                 <img
                   className="border-default aspect-square w-10 cursor-pointer rounded-full border-2"
-                  src={user.photoUrl}
+                  src={user.photoUrl || <FaUserLarge />}
                 />
               </SheetTrigger>
               <SheetContent>
@@ -85,32 +128,87 @@ export default function Content() {
                   <SheetTitle>{user.name}</SheetTitle>
                   <SheetDescription>{user.email}</SheetDescription>
                 </SheetHeader>
-                <div className="space-y-4 p-4">
-                  <h3 className="text-md font-semibold">Editar perfil</h3>
 
+                <form id="profile-form" className="space-y-6 p-4">
                   <div>
-                    <label htmlFor="name" className="text-sm">
-                      Nome
-                    </label>
-                    <Input id="name" defaultValue={user.name} />
+                    <h3 className="text-md font-semibold">Editar perfil</h3>
+                    <p
+                      className={
+                        user.defaultLogin
+                          ? "hidden"
+                          : "text-muted-foreground text-xs"
+                      }
+                    >
+                      (Ao logar com Google ou GitHub, as informações vêm das
+                      suas contas e não podem ser alteradas)
+                    </p>
                   </div>
 
-                  <div>
-                    <label htmlFor="password" className="text-sm">
-                      Nova senha
-                    </label>
-                    <Input id="password" type="password" />
+                  <div className="relative flex items-center gap-2 rounded-lg border border-black/10 p-4 dark:border-white/10">
+                    <p className="bg-background text-muted-foreground absolute -top-2.5 left-3 px-1 text-sm">
+                      Alterar nome
+                    </p>
+                    <img
+                      src={user.photoUrl || <FaUserLarge />}
+                      className="aspect-square w-15 rounded-full"
+                    />
+                    <div className="flex w-full flex-col gap-1">
+                      <label htmlFor="name" className="text-sm">
+                        Nome
+                      </label>
+                      <Input
+                        id="name"
+                        defaultValue={user.name}
+                        disabled={!user.defaultLogin}
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label htmlFor="password-confirmation" className="text-sm">
-                      Confirme a nova senha
-                    </label>
-                    <Input id="password-confirmation" type="password" />
+                  <div className="relative space-y-2 rounded-lg border border-black/10 p-4 dark:border-white/10">
+                    <p className="bg-background text-muted-foreground absolute -top-2.5 left-3 px-1 text-sm">
+                      Alterar senha
+                    </p>
+                    <div>
+                      <label htmlFor="oldPassword" className="text-sm">
+                        Senha atual
+                      </label>
+                      <Input
+                        id="oldPassword"
+                        type="password"
+                        disabled={!user.defaultLogin}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="newPassword" className="text-sm">
+                        Nova senha
+                      </label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        disabled={!user.defaultLogin}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="confirmNewPassword" className="text-sm">
+                        Confirme a nova senha
+                      </label>
+                      <Input
+                        id="confirmNewPassword"
+                        type="password"
+                        disabled={!user.defaultLogin}
+                      />
+                    </div>
                   </div>
-                </div>
+                </form>
                 <SheetFooter>
-                  <Button variant="secondary" onClick={() => {}}>
+                  <Button
+                    variant="secondary"
+                    disabled={!user.defaultLogin}
+                    type="submit"
+                    form="profile-form"
+                  >
                     Salvar alterações
                   </Button>
 

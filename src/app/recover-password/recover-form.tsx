@@ -13,20 +13,48 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/firebase/firebase-config";
+import { sucessToast, errorToast } from "@/lib/toast";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function RecoverForm() {
+  const [loading, setLoading] = useState(false);
+
+  const router = useRouter();
+
   const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
+    let email = formData.get("email") as string;
 
     try {
+      setLoading(true);
+
       await sendPasswordResetEmail(auth, email);
-      alert("Email de recuperação enviado!");
-    } catch (error) {
-      console.error("Erro ao enviar email de recuperação:", error);
-      alert("Erro ao enviar email de recuperação. Tente novamente.");
+      sucessToast("Email de recuperação enviado!");
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 1000);
+    } catch (error: any) {
+      console.log(error);
+
+      switch (error.code) {
+        case "auth/user-not-found":
+          errorToast("Usuário não encontrado");
+          break;
+
+        case "auth/invalid-email":
+          errorToast("Email inválido");
+          break;
+
+        default:
+          errorToast("Erro ao enviar email");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,7 +68,7 @@ export default function RecoverForm() {
       </CardHeader>
 
       <CardContent>
-        <form action="post">
+        <form action="post" onSubmit={handleResetPassword}>
           <Input placeholder="Email" name="email" />
         </form>
       </CardContent>
@@ -49,6 +77,8 @@ export default function RecoverForm() {
           <Button
             type="submit"
             className="bg-default hover:bg-default-hover cursor-pointer text-white"
+            disabled={loading}
+            loading={loading}
           >
             Recuperar senha
           </Button>

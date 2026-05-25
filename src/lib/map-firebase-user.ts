@@ -8,7 +8,7 @@ export default function mapFirebaseUser(
     name: firebaseUser.displayName || "Usuário sem nome",
     email: firebaseUser.email,
     photoUrl: firebaseUser.photoURL || null,
-    defaultLogin: true,
+    defaultLogin: defaultLogin,
   };
 
   return mappedUser;
