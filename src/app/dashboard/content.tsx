@@ -1,17 +1,14 @@
 "use client";
 
 import { useAuth } from "@/context/auth-contex";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,61 +18,44 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
-import { useEffect, useState } from "react";
-import { sucessToast, errorToast } from "@/lib/toast";
-import { auth } from "@/firebase/firebase-config";
 import {
-  updatePassword,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-} from "firebase/auth";
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
 
-import { IoFilter } from "react-icons/io5";
-import { FaUserLarge } from "react-icons/fa6";
+import { useState } from "react";
+import createAvatar from "@/lib/avatar";
+
+import { IoFilter, IoSearch } from "react-icons/io5";
+import { TbLogout } from "react-icons/tb";
+import { Input } from "@/components/ui/input";
 
 export default function Content() {
-  const currentUser = auth.currentUser;
-
   const { user, loading, logout } = useAuth();
 
   const [view, setView] = useState<"cards" | "board">("cards");
   const [showFilters, setShowFilters] = useState(false);
+  const [showLogoutAlert, setShowLogoutAlert] = useState(false);
 
-  const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!user) return;
+  const situation = [
+    { value: "to-do", label: "A Fazer" },
+    { value: "in-progress", label: "Em Andamento" },
+    { value: "done", label: "Concluído" },
+  ];
+  const [selectedSituation, setSelectedSituation] = useState({
+    value: "to-do",
+    label: "A Fazer",
+  });
 
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const oldPassword = formData.get("oldPassword") as string;
-    const newPassword = formData.get("newPassword") as string;
-    const confirmNewPassword = formData.get("confirmNewPassword") as string;
-
-    if (!user.defaultLogin) {
-      errorToast("Não é possível alterar o perfil");
-      return;
-    }
-
-    try {
-      if (oldPassword && newPassword && confirmNewPassword) {
-        if (newPassword !== confirmNewPassword) {
-          errorToast("As senhas não coincidem");
-          return;
-        }
-
-        if (currentUser) {
-          await updatePassword(currentUser, newPassword);
-          sucessToast("Senha alterada com sucesso");
-        }
-      }
-    } catch (error) {
-      console.error(error);
-      errorToast("Erro ao alterar senha");
-    }
-  };
+  const type = [
+    { value: "note", label: "Anotações" },
+    { value: "task", label: "Tarefas" },
+  ];
 
   return (
     <>
@@ -85,6 +65,7 @@ export default function Content() {
         <main>
           <header className="flex items-center justify-between border-b-1 border-black/10 px-6 py-2 dark:border-white/10">
             <h1>TaskFlow</h1>
+
             <div className="mr-6 ml-auto flex items-center gap-4 sm:mb-0 sm:ml-0">
               <div className="hidden sm:flex">
                 <button
@@ -97,6 +78,7 @@ export default function Content() {
                 >
                   Cartões
                 </button>
+
                 <button
                   onClick={() => setView("board")}
                   className={`h-9 w-24 cursor-pointer rounded-r-md border border-black/10 text-sm duration-200 dark:border-white/10 ${
@@ -111,133 +93,103 @@ export default function Content() {
 
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex aspect-square h-9 cursor-pointer items-center justify-center rounded-md border border-black/10 text-sm duration-200 dark:border-white/10 ${showFilters ? "bg-default" : "bg-transparent"}`}
+                className={`flex aspect-square h-9 cursor-pointer items-center justify-center rounded-md border border-black/10 text-sm duration-200 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 ${showFilters ? "bg-default" : "bg-transparent"}`}
+                disabled={view === "board"}
               >
-                <IoFilter size={"1.2rem"} />
+                <IoFilter size={16} />
               </button>
             </div>
-            <Sheet>
-              <SheetTrigger asChild>
-                <img
-                  className="border-default aspect-square w-10 cursor-pointer rounded-full border-2"
-                  src={user.photoUrl || <FaUserLarge />}
-                />
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>{user.name}</SheetTitle>
-                  <SheetDescription>{user.email}</SheetDescription>
-                </SheetHeader>
 
-                <form id="profile-form" className="space-y-6 p-4">
-                  <div>
-                    <h3 className="text-md font-semibold">Editar perfil</h3>
-                    <p
-                      className={
-                        user.defaultLogin
-                          ? "hidden"
-                          : "text-muted-foreground text-xs"
-                      }
-                    >
-                      (Ao logar com Google ou GitHub, as informações vêm das
-                      suas contas e não podem ser alteradas)
-                    </p>
-                  </div>
-
-                  <div className="relative flex items-center gap-2 rounded-lg border border-black/10 p-4 dark:border-white/10">
-                    <p className="bg-background text-muted-foreground absolute -top-2.5 left-3 px-1 text-sm">
-                      Alterar nome
-                    </p>
-                    <img
-                      src={user.photoUrl || <FaUserLarge />}
-                      className="aspect-square w-15 rounded-full"
-                    />
-                    <div className="flex w-full flex-col gap-1">
-                      <label htmlFor="name" className="text-sm">
-                        Nome
-                      </label>
-                      <Input
-                        id="name"
-                        defaultValue={user.name}
-                        disabled={!user.defaultLogin}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="relative space-y-2 rounded-lg border border-black/10 p-4 dark:border-white/10">
-                    <p className="bg-background text-muted-foreground absolute -top-2.5 left-3 px-1 text-sm">
-                      Alterar senha
-                    </p>
-                    <div>
-                      <label htmlFor="oldPassword" className="text-sm">
-                        Senha atual
-                      </label>
-                      <Input
-                        id="oldPassword"
-                        type="password"
-                        disabled={!user.defaultLogin}
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="newPassword" className="text-sm">
-                        Nova senha
-                      </label>
-                      <Input
-                        id="newPassword"
-                        type="password"
-                        disabled={!user.defaultLogin}
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="confirmNewPassword" className="text-sm">
-                        Confirme a nova senha
-                      </label>
-                      <Input
-                        id="confirmNewPassword"
-                        type="password"
-                        disabled={!user.defaultLogin}
-                      />
-                    </div>
-                  </div>
-                </form>
-                <SheetFooter>
-                  <Button
-                    variant="secondary"
-                    disabled={!user.defaultLogin}
-                    type="submit"
-                    form="profile-form"
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                {user.photoUrl ? (
+                  <img
+                    className="border-default aspect-square w-10 cursor-pointer rounded-full border-2 object-cover"
+                    src={user.photoUrl}
+                    alt={user.name}
+                  />
+                ) : (
+                  <div
+                    className="border-default text flex aspect-square w-10 cursor-pointer items-center justify-center rounded-full border-2 font-semibold text-white select-none"
+                    style={{
+                      backgroundColor: createAvatar(user.name || "Usuário")
+                        .color,
+                    }}
                   >
-                    Salvar alterações
-                  </Button>
-
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive">Sair</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Logout</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja sair?
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={logout}
-                          variant="destructive"
-                        >
-                          Sair
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </SheetFooter>
-              </SheetContent>
-            </Sheet>
+                    {createAvatar(user.name || "Usuário").text}
+                  </div>
+                )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p>{user.name || "Usuário"}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="cursor-pointer"
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setShowLogoutAlert(true);
+                  }}
+                >
+                  <TbLogout />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </header>
+
+          {/* Modal de logout */}
+          <AlertDialog open={showLogoutAlert} onOpenChange={setShowLogoutAlert}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Deseja realmente sair?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Você será desconectado da sua conta e precisará fazer login
+                  novamente para acessar o TaskFlow.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction variant="destructive" onClick={logout}>
+                  Sair
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <section>
+            <form
+              className={`${view === "cards" && showFilters ? "flex" : "hidden"} grid grid-cols-1 gap-1 p-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6`}
+            >
+              <div className="relative">
+                <Input type="search" className="pl-8" />
+                <IoSearch className="text-muted-foreground absolute top-1/2 left-2.5 -translate-y-1/2" />
+              </div>
+              <Combobox items={situation} defaultValue={selectedSituation}>
+                <ComboboxInput placeholder="Situação" showClear />
+                <ComboboxContent>
+                  <ComboboxList>
+                    {situation.map((item) => (
+                      <ComboboxItem key={item.value} value={item}>
+                        {item.label}
+                      </ComboboxItem>
+                    ))}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+              <Input />
+              <Input />
+              <Input />
+              <Input />
+            </form>
+          </section>
         </main>
       )}
     </>

@@ -32,6 +32,11 @@ export default function RecoverForm() {
     try {
       setLoading(true);
 
+      if (!email) {
+        errorToast("Preencha o campo de email");
+        return;
+      }
+
       await sendPasswordResetEmail(auth, email);
       sucessToast("Email de recuperação enviado!");
 
@@ -68,7 +73,7 @@ export default function RecoverForm() {
       </CardHeader>
 
       <CardContent>
-        <form action="post" onSubmit={handleResetPassword}>
+        <form action="post" onSubmit={handleResetPassword} id="recover-form">
           <Input placeholder="Email" name="email" />
         </form>
       </CardContent>
@@ -76,6 +81,7 @@ export default function RecoverForm() {
         <CardAction>
           <Button
             type="submit"
+            form="recover-form"
             className="bg-default hover:bg-default-hover cursor-pointer text-white"
             disabled={loading}
             loading={loading}
