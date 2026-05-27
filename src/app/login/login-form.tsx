@@ -73,7 +73,7 @@ export default function LoginForm() {
               disabled={loginLoading || googleLoading || githubLoading}
               className="bg-default hover:bg-default-hover cursor-pointer text-white"
             >
-              {loginLoading ? "Entrando..." : "Entrar"}
+              Entrar
             </Button>
           </CardAction>
         </CardFooter>
