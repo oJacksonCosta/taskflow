@@ -44,11 +44,10 @@ import {
 } from "@/components/ui/popover";
 
 import * as React from "react";
-import { addDays, format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import { type DateRange } from "react-day-picker";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import createAvatar from "@/lib/avatar";
 
 import { IoSearch } from "react-icons/io5";
@@ -59,8 +58,10 @@ import { BiCard } from "react-icons/bi";
 import { CgCalendarTwo } from "react-icons/cg";
 import { Spinner } from "@/components/ui/spinner";
 
+import { getNotes } from "@/firebase/firestore";
+
 const status = [
-  { value: "to-do", label: "A Fazer" },
+  { value: "todo", label: "A Fazer" },
   { value: "in-progress", label: "Em Andamento" },
   { value: "review", label: "Em Revisão" },
   { value: "done", label: "Concluído" },
@@ -105,6 +106,22 @@ export default function Content() {
   const [searchText, setSearchText] = useState("");
 
   const anchor = useComboboxAnchor();
+
+  const filters = {
+    type: selectedType?.value || "",
+    status: selectedStatus?.value || "",
+    priority: selectedPriority?.value || "",
+    tags: selectedTags || [],
+    dateRange: date || {},
+    searchText: searchText || "",
+  };
+
+  // Caso for informado status ou prioridade, altera o tipo para tarefa
+  useEffect(() => {
+    if (selectedPriority || selectedStatus) {
+      setSelectedType(type[1]);
+    }
+  }, [selectedPriority, selectedStatus]);
 
   return (
     <>
