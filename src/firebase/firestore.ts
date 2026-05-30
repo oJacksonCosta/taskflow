@@ -1,5 +1,6 @@
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { db } from "./firebase-config";
+import { Note } from "@/types";
 
 const notesRef = collection(db, "notes");
 
@@ -25,15 +26,15 @@ export const getNotes = async (
     id: doc.id,
     uid: doc.data().userId,
     title: doc.data().title,
-    description: doc.data().description,
+    content: doc.data().content,
     type: doc.data().type,
     status:
       doc.data()?.status === "todo" ? "to-do" : doc.data()?.status || null,
     priority: doc.data()?.priority || null,
-    deadline: doc.data().deadline
-      ? doc.data().deadline.toDate()
-      : doc.data().deadline
-        ? new Date(doc.data().deadline)
+    term: doc.data().term
+      ? doc.data().term.toDate()
+      : doc.data().term
+        ? new Date(doc.data().term)
         : null,
     date: doc.data().date?.toDate
       ? doc.data().date.toDate()
@@ -43,7 +44,7 @@ export const getNotes = async (
     tags: doc.data()?.tags || [],
   }));
 
-  const filteredNotes = notes.filter((note) => {
+  const filteredNotes: Note[] = notes.filter((note) => {
     const matchesType = filters.type ? note.type === filters.type : true;
     const matchesStatus = filters.status
       ? note.status === filters.status
@@ -62,9 +63,7 @@ export const getNotes = async (
       : true;
     const matchesSearchText = filters.searchText
       ? note.title.toLowerCase().includes(filters.searchText?.toLowerCase()) ||
-        note.description
-          ?.toLowerCase()
-          .includes(filters.searchText.toLowerCase())
+        note.content?.toLowerCase().includes(filters.searchText.toLowerCase())
       : true;
 
     return (

@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-contex";
@@ -43,6 +44,15 @@ export default function LoginForm() {
         <CardHeader>
           <CardTitle>Login</CardTitle>
           <CardDescription>Faça login para acessar seu painel!</CardDescription>
+          <CardAction>
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/register")}
+              className="cursor-pointer"
+            >
+              Registrar
+            </Button>
+          </CardAction>
         </CardHeader>
         <CardContent>
           <form
@@ -64,7 +74,7 @@ export default function LoginForm() {
             />
           </form>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col gap-2">
           <CardAction>
             <Button
               variant="default"
@@ -76,50 +86,41 @@ export default function LoginForm() {
               Entrar
             </Button>
           </CardAction>
+
+          <Separator className="mt-2 mb-2" />
+
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              disabled={loginLoading || googleLoading || githubLoading}
+              onClick={googleLogin}
+              className="cursor-pointer"
+            >
+              <BsGoogle /> Google
+            </Button>
+
+            <Button
+              variant="outline"
+              disabled={loginLoading || googleLoading || githubLoading}
+              onClick={githubLogin}
+              className="cursor-pointer"
+            >
+              <BsGithub /> GitHub
+            </Button>
+          </div>
+
+          <div className="mt-2 flex items-center gap-2">
+            <p className="text-sm text-gray-400">Esqueceu a senha?</p>
+            <Button
+              variant="link"
+              className="h-auto p-0"
+              onClick={() => router.push("/recover-password")}
+            >
+              Recuperar
+            </Button>
+          </div>
         </CardFooter>
       </Card>
-
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          disabled={loginLoading || googleLoading || githubLoading}
-          onClick={googleLogin}
-          className="h-8 w-8 rounded-full"
-        >
-          <BsGoogle />
-        </Button>
-
-        <Button
-          variant="outline"
-          disabled={loginLoading || googleLoading || githubLoading}
-          onClick={githubLogin}
-          className="h-8 w-8 rounded-full"
-        >
-          <BsGithub />
-        </Button>
-      </div>
-
-      <div className="mt-2 flex items-center gap-2">
-        <p className="text-sm text-gray-400">Ainda não possui uma conta?</p>
-        <Button
-          variant="link"
-          className="h-auto p-0"
-          onClick={() => router.push("/register")}
-        >
-          Registrar
-        </Button>
-      </div>
-
-      <div className="-mt-2 flex items-center gap-2">
-        <p className="text-sm text-gray-400">Esqueceu a senha?</p>
-        <Button
-          variant="link"
-          className="h-auto p-0"
-          onClick={() => router.push("/recover-password")}
-        >
-          Recuperar
-        </Button>
-      </div>
     </>
   );
 }

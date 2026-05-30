@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { sucessToast, errorToast } from "@/lib/toast";
@@ -94,8 +95,18 @@ export default function RegisterForm() {
         <CardHeader>
           <CardTitle>Registre-se</CardTitle>
           <CardDescription>
-            Crie uma conta para começar a utilizar o TaskFlow!
+            Cadastre-se para começar a utilizar o TaskFlow!
           </CardDescription>
+
+          <CardAction>
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/login")}
+              className="cursor-pointer"
+            >
+              Entrar
+            </Button>
+          </CardAction>
         </CardHeader>
         <CardContent>
           <form
@@ -129,7 +140,7 @@ export default function RegisterForm() {
             />
           </form>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col gap-2">
           <CardAction>
             <Button
               variant="default"
@@ -142,39 +153,30 @@ export default function RegisterForm() {
               {registerLoading ? "Carregando..." : "Registrar"}
             </Button>
           </CardAction>
+
+          <Separator className="mt-2 mb-2" />
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={googleLogin}
+              disabled={googleLoading}
+              className="cursor-pointer"
+            >
+              <BsGoogle /> Google
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={githubLogin}
+              disabled={githubLoading}
+              className="cursor-pointer"
+            >
+              <BsGithub /> GitHub
+            </Button>
+          </div>
         </CardFooter>
       </Card>
-
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          onClick={googleLogin}
-          disabled={googleLoading}
-          className="h-8 w-8 rounded-full"
-        >
-          <BsGoogle />
-        </Button>
-
-        <Button
-          variant="outline"
-          onClick={githubLogin}
-          disabled={githubLoading}
-          className="h-8 w-8 rounded-full"
-        >
-          <BsGithub />
-        </Button>
-      </div>
-
-      <div className="mt-2 flex items-center gap-2">
-        <p className="text-sm text-gray-400">Já possui uma conta? </p>
-        <Button
-          variant="link"
-          className="h-auto cursor-pointer p-0"
-          onClick={() => router.push("/login")}
-        >
-          Entrar
-        </Button>
-      </div>
     </>
   );
 }

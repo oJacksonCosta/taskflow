@@ -57,8 +57,10 @@ import { HiPlus } from "react-icons/hi";
 import { BiCard } from "react-icons/bi";
 import { CgCalendarTwo } from "react-icons/cg";
 import { Spinner } from "@/components/ui/spinner";
+import NoteCard from "@/components/ui/note-card";
 
 import { getNotes } from "@/firebase/firestore";
+import { Note } from "@/types";
 
 const status = [
   { value: "todo", label: "A Fazer" },
@@ -99,11 +101,10 @@ export default function Content() {
     label: string;
   } | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(),
-    to: new Date(),
-  });
+  const [date, setDate] = React.useState<DateRange | undefined>({});
   const [searchText, setSearchText] = useState("");
+
+  const [notes, setNotes] = useState<Note[] | null>(null);
 
   const anchor = useComboboxAnchor();
 
@@ -122,6 +123,17 @@ export default function Content() {
       setSelectedType(type[1]);
     }
   }, [selectedPriority, selectedStatus]);
+
+  useEffect(() => {
+    if (user?.uid) {
+      const fetchNotes = async () => {
+        const notes = await getNotes(user.uid, filters);
+        setNotes(notes);
+      };
+
+      fetchNotes();
+    }
+  }, [filters, user?.uid]);
 
   return (
     <>
@@ -226,8 +238,9 @@ export default function Content() {
 
           {/* Filtros */}
           {view === "cards" && (
-            <section className="border-b border-black/10 bg-slate-50/30 p-6 dark:border-white/10 dark:bg-zinc-900/30">
+            <section className="border-b border-black/10 bg-slate-50/30 p-4 dark:border-white/10 dark:bg-zinc-900/30">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
+                {/* Pesquisa */}
                 <div className="relative h-fit sm:col-span-2 lg:col-span-2">
                   <Input
                     type="search"
@@ -239,6 +252,7 @@ export default function Content() {
                   <IoSearch className="text-muted-foreground absolute top-1/2 left-2.5 -translate-y-1/2" />
                 </div>
 
+                {/* Tipo */}
                 <Combobox
                   items={type}
                   value={selectedType}
@@ -260,6 +274,7 @@ export default function Content() {
                   </ComboboxContent>
                 </Combobox>
 
+                {/* Situação */}
                 <Combobox
                   items={status}
                   value={selectedStatus}
@@ -281,6 +296,7 @@ export default function Content() {
                   </ComboboxContent>
                 </Combobox>
 
+                {/* Prioridade */}
                 <Combobox
                   items={priority}
                   value={selectedPriority}
@@ -302,13 +318,14 @@ export default function Content() {
                   </ComboboxContent>
                 </Combobox>
 
+                {/* Data */}
                 <Field className="w-full">
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         id="date-picker-range"
-                        className="w-full justify-start px-2.5 font-normal"
+                        className="w-full justify-start overflow-hidden px-2.5 font-normal text-ellipsis whitespace-nowrap"
                       >
                         <CgCalendarTwo className="text-muted-foreground size-4.5" />
                         {date?.from ? (
@@ -337,6 +354,7 @@ export default function Content() {
                   </Popover>
                 </Field>
 
+                {/* Tags */}
                 <div className="col-span-full">
                   <Combobox
                     multiple
@@ -345,7 +363,10 @@ export default function Content() {
                     value={selectedTags}
                     onValueChange={setSelectedTags}
                   >
-                    <ComboboxChips ref={anchor} className="w-full">
+                    <ComboboxChips
+                      ref={anchor}
+                      className="w-full overflow-hidden"
+                    >
                       <ComboboxValue>
                         {(values) => (
                           <React.Fragment>
@@ -370,31 +391,10 @@ export default function Content() {
                   </Combobox>
                 </div>
               </div>
-              <div className="text-muted-foreground mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-black/5 pt-3 text-sm dark:border-white/5">
-                <span>
-                  <strong>Tipo:</strong> {selectedType?.label || "nenhum"}
-                </span>
-                <span>
-                  <strong>Status:</strong> {selectedStatus?.label || "nenhum"}
-                </span>
-                <span>
-                  <strong>Prioridade:</strong>{" "}
-                  {selectedPriority?.label || "nenhuma"}
-                </span>
-                <span>
-                  <strong>Tags:</strong> {selectedTags.join(", ") || "nenhuma"}
-                </span>
-                <span>
-                  <strong>Pesquisa:</strong> {searchText || "nenhuma"}
-                </span>
-                <span>
-                  <strong>Data:</strong>{" "}
-                  {date?.from + " - " + date?.to || "nenhuma"}
-                </span>
-              </div>
             </section>
           )}
           <section className="relative w-full">
+            {/* Barra de ações */}
             <div className="bg-card fixed right-1/2 bottom-10 flex translate-x-1/2 items-center gap-2 rounded-xl p-2 shadow-lg">
               <Button
                 className="h-12 w-12 cursor-pointer rounded-lg transition-all duration-200 hover:scale-110"
@@ -408,8 +408,31 @@ export default function Content() {
               </Button>
             </div>
           </section>
+
+          {notes ? <ViewContent view={view} notes={notes} /> : <Spinner />}
         </main>
       )}
     </>
+  );
+}
+
+// Renderização do conteúdo de acordo com a view
+function ViewContent({ view, notes }: { view: string; notes: Note[] }) {
+  return (
+    <section className="p-4">
+      {view === "cards" && (
+        <section className="flex flex-col gap-2">
+          {notes.map((note) => (
+            <NoteCard key={note.id} note={note} />
+          ))}
+        </section>
+      )}
+
+      {view === "board" && (
+        <section>
+          <h1>Quadro</h1>
+        </section>
+      )}
+    </section>
   );
 }
