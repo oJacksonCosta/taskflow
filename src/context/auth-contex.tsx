@@ -2,24 +2,33 @@
 
 import {
   createContext,
-  useContext,
-  useState,
   ReactNode,
+  useContext,
   useEffect,
+  useState,
 } from "react";
+import { useRouter } from "next/navigation";
 
-import { User } from "@/types";
-import { sucessToast, errorToast } from "@/lib/toast";
-import mapFirebaseUser from "@/lib/map-firebase-user";
+// Libraries
+import {
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  updateProfile,
+} from "firebase/auth";
 
-import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+// Firebase / Services
 import {
   auth,
-  googleProvider,
   githubProvider,
+  googleProvider,
 } from "@/firebase/firebase-config";
 
-import { useRouter } from "next/navigation";
+// Utils
+import mapFirebaseUser from "@/lib/map-firebase-user";
+import { errorToast, sucessToast } from "@/lib/toast";
+
+// Types
+import { User } from "@/types";
 
 interface AuthContextType {
   user: User | null;
@@ -27,11 +36,13 @@ interface AuthContextType {
   loginLoading: boolean;
   googleLoading: boolean;
   githubLoading: boolean;
+  updateNameLoading: boolean;
   login: (email: string, pass: string) => Promise<void>;
   googleLogin: () => Promise<void>;
   githubLogin: () => Promise<void>;
   logout: () => void;
   recoverUser: () => void;
+  handleUpdateName: (newName: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loginLoading, setLoginLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
+  const [updateNameLoading, setUpdateNameLoading] = useState(false);
 
   const router = useRouter();
 
@@ -178,6 +190,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/login");
   };
 
+  const handleUpdateName = async (newName: string) => {
+    setUpdateNameLoading(true);
+
+    if (!auth.currentUser) {
+      errorToast("Erro ao atualizar o nome");
+      setUpdateNameLoading(false);
+      return;
+    }
+
+    if (!newName || newName === "") {
+      errorToast("Preencha o campo de nome");
+      setUpdateNameLoading(false);
+      return;
+    }
+
+    if (newName === user?.name) {
+      errorToast("O nome já é esse");
+      setUpdateNameLoading(false);
+      return;
+    }
+
+    try {
+      await updateProfile(auth.currentUser, { displayName: newName });
+      setUser((prevUser) => (prevUser ? { ...prevUser, name: newName } : null));
+      localStorage.setItem("user", JSON.stringify(user));
+
+      sucessToast("Nome atualizado com sucesso!");
+    } catch (error) {
+      errorToast("Erro ao atualizar o nome");
+      console.log(error);
+    } finally {
+      setUpdateNameLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -191,6 +238,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         githubLoading,
         logout,
         recoverUser,
+        handleUpdateName,
+        updateNameLoading,
       }}
     >
       {children}

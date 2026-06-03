@@ -1,22 +1,29 @@
 "use client";
 
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-  CardAction,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "@/firebase/firebase-config";
-import { sucessToast, errorToast } from "@/lib/toast";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+
+// Libraries
+import { sendPasswordResetEmail } from "firebase/auth";
+
+// Firebase / Services
+import { auth } from "@/firebase/firebase-config";
+
+// Components
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+
+// Utils
+import { errorToast, sucessToast } from "@/lib/toast";
 
 export default function RecoverForm() {
   const [loading, setLoading] = useState(false);

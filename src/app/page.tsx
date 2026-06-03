@@ -1,9 +1,12 @@
 "use client";
 
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { redirect, RedirectType } from "next/navigation";
+
+// Libraries
 import { FaArrowCircleRight } from "react-icons/fa";
+
+// Components
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (

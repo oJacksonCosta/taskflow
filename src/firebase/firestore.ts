@@ -1,5 +1,10 @@
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+// Libraries
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
+
+// Firebase / Services
 import { db } from "./firebase-config";
+
+// Types
 import { Note } from "@/types";
 
 const notesRef = collection(db, "notes");

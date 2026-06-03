@@ -1,14 +1,22 @@
 "use client";
 
+import * as React from "react";
+import { useEffect, useState } from "react";
+
+// Libraries
+import { format } from "date-fns";
+import { type DateRange } from "react-day-picker";
+import { BiCard } from "react-icons/bi";
+import { CgCalendarTwo } from "react-icons/cg";
+import { HiPlus } from "react-icons/hi";
+import { HiOutlineTag } from "react-icons/hi2";
+import { IoSearch } from "react-icons/io5";
+import { TbLayoutKanban, TbLogout } from "react-icons/tb";
+
+// Context
 import { useAuth } from "@/context/auth-contex";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+
+// Components
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,47 +27,46 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Combobox,
   ComboboxChip,
   ComboboxChips,
   ComboboxChipsInput,
-  ComboboxInput,
   ComboboxContent,
   ComboboxEmpty,
+  ComboboxInput,
   ComboboxItem,
   ComboboxList,
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import NoteCard from "@/components/ui/note-card";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Spinner } from "@/components/ui/spinner";
 
-import * as React from "react";
-import { format } from "date-fns";
-import { type DateRange } from "react-day-picker";
+// Firebase / Services
+import { getNotes } from "@/firebase/firestore";
 
-import { useState, useEffect } from "react";
+// Utils
 import createAvatar from "@/lib/avatar";
 
-import { IoSearch } from "react-icons/io5";
-import { TbLogout, TbLayoutKanban } from "react-icons/tb";
-import { HiOutlineTag } from "react-icons/hi2";
-import { HiPlus } from "react-icons/hi";
-import { BiCard } from "react-icons/bi";
-import { CgCalendarTwo } from "react-icons/cg";
-import { Spinner } from "@/components/ui/spinner";
-import NoteCard from "@/components/ui/note-card";
-
-import { getNotes } from "@/firebase/firestore";
+// Types
 import { Note } from "@/types";
 
 const status = [
@@ -83,7 +90,10 @@ const priority = [
 const tags = ["Pessoal", "Trabalho", "Estudos", "Compras", "Outros"];
 
 export default function Content() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, handleUpdateName, updateNameLoading } =
+    useAuth();
+
+  const [newName, setNewName] = useState("");
 
   const [view, setView] = useState<"cards" | "board">("cards");
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
@@ -101,7 +111,7 @@ export default function Content() {
     label: string;
   } | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [date, setDate] = React.useState<DateRange | undefined>({});
+  const [date, setDate] = React.useState<DateRange | undefined>(undefined);
   const [searchText, setSearchText] = useState("");
 
   const [notes, setNotes] = useState<Note[] | null>(null);
@@ -138,14 +148,14 @@ export default function Content() {
   return (
     <>
       {!user && loading && (
-        <div className="flex h-dvh w-dvw items-center justify-center gap-3">
+        <div className="flex h-dvh w-dvw items-center justify-center gap-2">
           <Spinner className="text-muted-foreground h-5 w-5" />
           <p className="text-muted-foreground">Carregando perfil...</p>
         </div>
       )}
 
       {user && (
-        <main className="h-dvh w-dvw">
+        <main className="flex h-dvh w-dvw flex-col overflow-hidden">
           <header className="flex items-center justify-between border-b-1 border-black/10 px-6 py-2 dark:border-white/10">
             <h1>TaskFlow</h1>
 
@@ -202,7 +212,29 @@ export default function Content() {
                     </p>
                   </div>
                 </DropdownMenuLabel>
+
                 <DropdownMenuSeparator />
+                <div className="space-y-2 p-2">
+                  <Field>
+                    <FieldLabel>Nome de usuário</FieldLabel>
+                    <Input
+                      placeholder="Novo nome"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                    />
+                  </Field>
+                  <Button
+                    onClick={() => handleUpdateName(newName)}
+                    disabled={updateNameLoading}
+                    variant="secondary"
+                    className="cursor-pointer"
+                    loading={updateNameLoading}
+                  >
+                    Salvar
+                  </Button>
+                </div>
+                <DropdownMenuSeparator />
+
                 <DropdownMenuItem
                   variant="destructive"
                   className="cursor-pointer"
@@ -409,7 +441,13 @@ export default function Content() {
             </div>
           </section>
 
-          {notes ? <ViewContent view={view} notes={notes} /> : <Spinner />}
+          {notes ? (
+            <ViewContent view={view} notes={notes} />
+          ) : (
+            <div className="flex flex-1 items-center justify-center">
+              <Spinner className="text-muted-foreground h-6 w-6" />
+            </div>
+          )}
         </main>
       )}
     </>
@@ -419,9 +457,9 @@ export default function Content() {
 // Renderização do conteúdo de acordo com a view
 function ViewContent({ view, notes }: { view: string; notes: Note[] }) {
   return (
-    <section className="p-4">
+    <section className="min-h-0 flex-1 overflow-hidden p-4">
       {view === "cards" && (
-        <section className="flex flex-col gap-2">
+        <section className="grid h-full grid-cols-1 gap-2 overflow-y-auto md:grid-cols-2 lg:grid-cols-3">
           {notes.map((note) => (
             <NoteCard key={note.id} note={note} />
           ))}
@@ -429,7 +467,7 @@ function ViewContent({ view, notes }: { view: string; notes: Note[] }) {
       )}
 
       {view === "board" && (
-        <section>
+        <section className="h-full overflow-y-auto">
           <h1>Quadro</h1>
         </section>
       )}

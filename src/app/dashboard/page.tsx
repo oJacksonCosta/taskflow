@@ -1,4 +1,6 @@
 import { Metadata } from "next";
+
+// Components
 import Content from "./content";
 
 export const metadata: Metadata = {

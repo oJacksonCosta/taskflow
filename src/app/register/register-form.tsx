@@ -1,5 +1,20 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+// Libraries
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { BsGithub, BsGoogle } from "react-icons/bs";
+
+// Context
+import { useAuth } from "@/context/auth-contex";
+
+// Firebase / Services
+import { auth } from "@/firebase/firebase-config";
+
+// Components
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -9,18 +24,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { sucessToast, errorToast } from "@/lib/toast";
-import { auth } from "@/firebase/firebase-config";
-import { useAuth } from "@/context/auth-contex";
+import { Separator } from "@/components/ui/separator";
 
-import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { useState } from "react";
-
-import { BsGoogle, BsGithub } from "react-icons/bs";
+// Utils
+import { errorToast, sucessToast } from "@/lib/toast";
 
 export default function RegisterForm() {
   const [registerLoading, setRegisterLoading] = useState(false);

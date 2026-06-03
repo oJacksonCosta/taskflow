@@ -1,5 +1,15 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
+// Libraries
+import { BsGithub, BsGoogle } from "react-icons/bs";
+
+// Context
+import { useAuth } from "@/context/auth-contex";
+
+// Components
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -9,13 +19,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/context/auth-contex";
-import { useRouter } from "next/navigation";
-
-import { BsGoogle, BsGithub } from "react-icons/bs";
+import { Separator } from "@/components/ui/separator";
 
 export default function LoginForm() {
   const {

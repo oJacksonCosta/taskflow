@@ -1,9 +1,15 @@
-import "./globals.css";
-import { Montserrat } from "next/font/google";
 import { Metadata } from "next";
+import { Montserrat } from "next/font/google";
+
+// Libraries
 import { Toaster } from "react-hot-toast";
+
+// Contexts
 import { AuthProvider } from "@/context/auth-contex";
 import { ThemeProvider } from "@/context/theme-context";
+
+// Styles
+import "./globals.css";
 
 const montserrat = Montserrat({
   subsets: ["latin"],

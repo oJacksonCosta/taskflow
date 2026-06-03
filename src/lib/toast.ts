@@ -1,3 +1,4 @@
+// Libraries
 import toast from "react-hot-toast";
 const duration = 4000;
 const position = "top-center";

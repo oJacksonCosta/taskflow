@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 
+// Components
 import RecoverForm from "./recover-form";
 
 export const metadata: Metadata = {
