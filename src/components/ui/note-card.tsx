@@ -19,6 +19,7 @@ import { Separator } from "./separator";
 
 interface NoteCardProps {
   note: Note;
+  onClick?: () => void;
 }
 
 function getTaskPriority(priority: string) {
@@ -160,18 +161,18 @@ export default function NoteCard({ note }: NoteCardProps) {
         )}
       </div>
 
-      <Separator className="mt-2 mb-2" />
+      <Separator />
 
       <p className="text-muted-foreground flex-1 overflow-hidden text-sm whitespace-pre-wrap">
         {note.content}
       </p>
 
       {note.tags && note.tags.length > 0 && (
-        <div className="text-muted-foreground mt-2 line-clamp-2">
+        <div className="text-muted-foreground bg-muted mt-1 line-clamp-1 rounded-lg p-1">
           {note.tags.map((tag) => (
             <span
               key={tag}
-              className="bg-muted text-muted-foreground mr-1 mb-1 inline-flex items-center gap-1 rounded-md px-2 py-1"
+              className="bg-card text-muted-foreground inline-flex items-center gap-1 rounded-md px-2 py-1"
             >
               <HiOutlineTag className="text-muted-foreground size-3.5" />
               <span className="text-xs font-semibold">{tag}</span>
@@ -180,7 +181,7 @@ export default function NoteCard({ note }: NoteCardProps) {
         </div>
       )}
 
-      {note.type === "task" && <Separator className="mt-2 mb-2" />}
+      {/* {note.type === "task" && <Separator className="mt-2 mb-2" />} */}
 
       <div className="flex items-center justify-between gap-2">
         {note.status && (

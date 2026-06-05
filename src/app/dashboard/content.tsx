@@ -9,9 +9,10 @@ import { type DateRange } from "react-day-picker";
 import { BiCard } from "react-icons/bi";
 import { CgCalendarTwo } from "react-icons/cg";
 import { HiPlus } from "react-icons/hi";
-import { HiOutlineTag } from "react-icons/hi";
+import { HiOutlineTag, HiOutlineTrash } from "react-icons/hi";
 import { IoSearch } from "react-icons/io5";
 import { TbLayoutKanban, TbLogout } from "react-icons/tb";
+import { FiSave } from "react-icons/fi";
 
 // Context
 import { useAuth } from "@/context/auth-contex";
@@ -27,6 +28,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -59,12 +70,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Spinner } from "@/components/ui/spinner";
+import { Separator } from "@/components/ui/separator";
 
 // Firebase / Services
-import { getNotes } from "@/firebase/firestore";
+import { getNotes, getTags, addTag, deleteTag } from "@/firebase/firestore";
 
 // Utils
 import createAvatar from "@/lib/avatar";
+import { errorToast, sucessToast } from "@/lib/toast";
 
 // Types
 import { Note } from "@/types";
@@ -87,8 +100,6 @@ const priority = [
   { value: "low", label: "Baixa" },
 ];
 
-const tags = ["Pessoal", "Trabalho", "Estudos", "Compras", "Outros", "Teste"];
-
 export default function Content() {
   const { user, loading, logout, handleUpdateName, updateNameLoading } =
     useAuth();
@@ -97,6 +108,10 @@ export default function Content() {
 
   const [view, setView] = useState<"cards" | "board">("cards");
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
+  const [tagToDelete, setTagToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const [selectedStatus, setSelectedStatus] = useState<{
     value: string;
@@ -115,6 +130,10 @@ export default function Content() {
   const [searchText, setSearchText] = useState("");
 
   const [notes, setNotes] = useState<Note[] | null>(null);
+
+  const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
+  const [newTag, setNewTag] = useState("");
+  const [addTagLoading, setAddTagLoading] = useState(false);
 
   const anchor = useComboboxAnchor();
 
@@ -145,6 +164,61 @@ export default function Content() {
     }
   }, [filters, user?.uid]);
 
+  useEffect(() => {
+    if (user?.uid) {
+      const fetchTags = async () => {
+        const tags = await getTags(user.uid);
+        setTags(tags);
+      };
+
+      fetchTags();
+    }
+  }, [user?.uid]);
+
+  const handleAddTag = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const trimmedTag = newTag.trim();
+    if (user?.uid && trimmedTag) {
+      setAddTagLoading(true);
+      try {
+        const newTagObj = await addTag(user.uid, trimmedTag);
+        setTags((prev) => {
+          if (
+            prev.some(
+              (tag) => tag.name.toLowerCase() === trimmedTag.toLowerCase(),
+            )
+          )
+            return prev;
+          return [...prev, newTagObj];
+        });
+        setNewTag("");
+        sucessToast("Tag adicionada com sucesso!");
+      } catch (error: any) {
+        if (error.message === "Tag já existente") {
+          errorToast("Esta tag já existe!");
+        } else {
+          errorToast("Erro ao adicionar tag.");
+        }
+        console.error("Erro ao adicionar tag:", error);
+      } finally {
+        setAddTagLoading(false);
+      }
+    }
+  };
+
+  const handleDeleteTag = async (tagId: string) => {
+    try {
+      if (!user?.uid) return;
+      await deleteTag(user.uid, tagId);
+      setTags((prev) => prev.filter((tag) => tag.id !== tagId));
+
+      sucessToast("Tag deletada com sucesso!");
+    } catch (error: any) {
+      errorToast("Erro ao deletar tag.");
+      console.error("Erro ao deletar tag:", error);
+    }
+  };
+
   return (
     <>
       {!user && loading && (
@@ -163,7 +237,7 @@ export default function Content() {
               <div className="relative hidden h-9 sm:flex">
                 <button
                   onClick={() => setView("cards")}
-                  className={`${view === "cards" ? "text-white" : "text-muted-foreground"} h9 z-2 flex w-28 cursor-pointer items-center justify-center gap-1`}
+                  className={`${view === "cards" ? "text-white" : "text-muted-foreground"} h9 z-2 flex w-28 cursor-pointer items-center justify-center gap-1 text-sm font-semibold`}
                 >
                   <BiCard className="size-4.5" />
                   Cartões
@@ -171,7 +245,7 @@ export default function Content() {
 
                 <button
                   onClick={() => setView("board")}
-                  className={`${view === "board" ? "text-white" : "text-muted-foreground"} h9 z-2 flex w-28 cursor-pointer items-center justify-center gap-1`}
+                  className={`${view === "board" ? "text-white" : "text-muted-foreground"} h9 z-2 flex w-28 cursor-pointer items-center justify-center gap-1 text-sm font-semibold`}
                 >
                   <TbLayoutKanban className="size-4.5" />
                   Quadro
@@ -269,6 +343,39 @@ export default function Content() {
                   className="cursor-pointer"
                 >
                   Sair
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Modal de confirmação para excluir tag */}
+          <AlertDialog
+            open={!!tagToDelete}
+            onOpenChange={(open) => !open && setTagToDelete(null)}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir Tag</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza que deseja excluir a tag{" "}
+                  <span className="font-bold">{tagToDelete?.name}</span>?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="cursor-pointer">
+                  Cancelar
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={() => {
+                    if (tagToDelete) {
+                      handleDeleteTag(tagToDelete.id);
+                      setTagToDelete(null);
+                    }
+                  }}
+                  className="cursor-pointer"
+                >
+                  Excluir
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -398,7 +505,7 @@ export default function Content() {
                   <Combobox
                     multiple
                     autoHighlight
-                    items={tags}
+                    items={tags.map((tag) => tag.name)}
                     value={selectedTags}
                     onValueChange={setSelectedTags}
                   >
@@ -432,29 +539,83 @@ export default function Content() {
               </div>
             </section>
           )}
-          <section className="relative w-full">
+          <section className="relative w-full overflow-y-auto pb-25">
             {/* Barra de ações */}
-            <div className="bg-card fixed right-1/2 bottom-10 flex translate-x-1/2 items-center gap-2 rounded-xl p-2 shadow-lg">
-              <Button
-                className="h-12 w-12 cursor-pointer rounded-lg transition-all duration-200 hover:scale-110"
-                variant={"secondary"}
-              >
-                <HiOutlineTag className="size-5" />
-              </Button>
+            <div className="bg-muted fixed right-1/2 bottom-10 flex translate-x-1/2 items-center gap-2 rounded-xl p-2 shadow-xl">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="bg-default hover:bg-default-hover h-12 w-12 cursor-pointer rounded-lg text-white shadow-md transition-all duration-200 ease-in-out hover:-translate-y-1">
+                    <HiOutlineTag className="size-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Tags</DialogTitle>
+                    <DialogDescription>
+                      Adicione ou remova tags
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div>
+                    <form onSubmit={handleAddTag} className="flex gap-1">
+                      <Input
+                        placeholder="Nova tag"
+                        onChange={(e) => setNewTag(e.target.value)}
+                        value={newTag}
+                      />
+                      <Button
+                        type="submit"
+                        className="bg-default hover:bg-default-hover cursor-pointer text-white duration-200"
+                        disabled={!newTag.trim() || addTagLoading}
+                      >
+                        {addTagLoading ? (
+                          <Spinner className="h-4 w-4 text-white" />
+                        ) : (
+                          <FiSave className="size-4" />
+                        )}
+                      </Button>
+                    </form>
 
-              <Button className="bg-default hover:bg-default-hover h-12 w-12 cursor-pointer rounded-lg text-white transition-all duration-200 hover:scale-110">
+                    <div className="mt-4">
+                      <p className="text-muted-foreground text-sm font-bold">
+                        Suas tags{" "}
+                        <span className="text-xs font-normal">
+                          (Clique sobre a tag para removê-la)
+                        </span>
+                      </p>
+                      <Separator className="mb-2" />
+                    </div>
+
+                    {tags && (
+                      <div className="flex flex-wrap gap-1">
+                        {tags.map((tag, index) => (
+                          <div
+                            key={tag.id || index}
+                            onClick={() => setTagToDelete(tag)}
+                            className="bg-muted text-muted-foreground flex w-fit cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold transition-all duration-200 hover:bg-red-500 hover:text-white"
+                          >
+                            <HiOutlineTag className="size-3.5" />
+                            {tag.name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Button className="bg-default hover:bg-default-hover h-12 w-12 cursor-pointer rounded-lg text-white shadow-md transition-all duration-200 ease-in-out hover:-translate-y-1">
                 <HiPlus className="size-5" />
               </Button>
             </div>
-          </section>
 
-          {notes ? (
-            <ViewContent view={view} notes={notes} />
-          ) : (
-            <div className="flex flex-1 items-center justify-center">
-              <Spinner className="text-muted-foreground h-6 w-6" />
-            </div>
-          )}
+            {notes ? (
+              <ViewContent view={view} notes={notes} />
+            ) : (
+              <div className="flex flex-1 items-center justify-center">
+                <Spinner className="text-muted-foreground h-6 w-6" />
+              </div>
+            )}
+          </section>
         </main>
       )}
     </>
@@ -464,9 +625,9 @@ export default function Content() {
 // Renderização do conteúdo de acordo com a view
 function ViewContent({ view, notes }: { view: string; notes: Note[] }) {
   return (
-    <section className="min-h-0 flex-1 overflow-hidden p-4">
+    <section className="min-h-0 flex-1 overflow-hidden p-4 pr-2">
       {view === "cards" && (
-        <section className="grid h-full grid-cols-1 gap-2 overflow-y-auto md:grid-cols-2 lg:grid-cols-3">
+        <section className="grid h-full grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
           {notes.map((note) => (
             <NoteCard key={note.id} note={note} />
           ))}

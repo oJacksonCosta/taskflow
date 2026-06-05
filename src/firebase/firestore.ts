@@ -1,5 +1,15 @@
 // Libraries
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  where,
+  addDoc,
+  deleteDoc,
+  serverTimestamp,
+  doc,
+} from "firebase/firestore";
 
 // Firebase / Services
 import { db } from "./firebase-config";
@@ -32,58 +42,118 @@ export const getNotes = async (
     searchText: string;
   },
 ) => {
-  const q = query(
-    notesRef,
-    where("userId", "==", uid),
-    orderBy("date", "desc"),
-  );
-
-  const snapshot = await getDocs(q);
-  const notes = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    uid: doc.data().userId,
-    title: doc.data().title,
-    content: doc.data().content || "",
-    type: doc.data().type,
-    status:
-      doc.data()?.status === "todo" ? "to-do" : doc.data()?.status || null,
-    priority: doc.data()?.priority || null,
-    term: convertToDate(doc.data().term),
-    date: convertToDate(doc.data().date) || new Date(),
-    tags: doc.data()?.tags || [],
-  }));
-
-  const filteredNotes: Note[] = notes.filter((note) => {
-    const matchesType = filters.type ? note.type === filters.type : true;
-    const matchesStatus = filters.status
-      ? note.status === filters.status
-      : true;
-    const matchesPriority = filters.priority
-      ? note.priority === filters.priority
-      : true;
-    const matchesTags =
-      filters.tags.length > 0
-        ? filters.tags.every((tag) => note.tags.includes(tag))
-        : true;
-    const matchesDateRange = filters.dateRange
-      ? note.date &&
-        (!filters.dateRange.from || note.date >= filters.dateRange.from) &&
-        (!filters.dateRange.to || note.date <= filters.dateRange.to)
-      : true;
-    const matchesSearchText = filters.searchText
-      ? note.title.toLowerCase().includes(filters.searchText?.toLowerCase()) ||
-        note.content?.toLowerCase().includes(filters.searchText.toLowerCase())
-      : true;
-
-    return (
-      matchesType &&
-      matchesStatus &&
-      matchesPriority &&
-      matchesTags &&
-      matchesDateRange &&
-      matchesSearchText
+  try {
+    const q = query(
+      notesRef,
+      where("userId", "==", uid),
+      orderBy("date", "desc"),
     );
-  });
 
-  return filteredNotes;
+    const snapshot = await getDocs(q);
+    const notes = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      uid: doc.data().userId,
+      title: doc.data().title,
+      content: doc.data().content || "",
+      type: doc.data().type,
+      status:
+        doc.data()?.status === "todo" ? "to-do" : doc.data()?.status || null,
+      priority: doc.data()?.priority || null,
+      term: convertToDate(doc.data().term),
+      date: convertToDate(doc.data().date) || new Date(),
+      tags: doc.data()?.tags || [],
+    }));
+
+    const filteredNotes: Note[] = notes.filter((note) => {
+      const matchesType = filters.type ? note.type === filters.type : true;
+      const matchesStatus = filters.status
+        ? note.status === filters.status
+        : true;
+      const matchesPriority = filters.priority
+        ? note.priority === filters.priority
+        : true;
+      const matchesTags =
+        filters.tags.length > 0
+          ? filters.tags.every((tag) => note.tags.includes(tag))
+          : true;
+      const matchesDateRange = filters.dateRange
+        ? note.date &&
+          (!filters.dateRange.from || note.date >= filters.dateRange.from) &&
+          (!filters.dateRange.to || note.date <= filters.dateRange.to)
+        : true;
+      const matchesSearchText = filters.searchText
+        ? note.title
+            .toLowerCase()
+            .includes(filters.searchText?.toLowerCase()) ||
+          note.content?.toLowerCase().includes(filters.searchText.toLowerCase())
+        : true;
+
+      return (
+        matchesType &&
+        matchesStatus &&
+        matchesPriority &&
+        matchesTags &&
+        matchesDateRange &&
+        matchesSearchText
+      );
+    });
+
+    return filteredNotes;
+  } catch (error) {
+    console.error("Erro ao obter notas:", error);
+    throw error;
+  }
+};
+
+export const getTags = async (uid: string) => {
+  try {
+    const tagsRef = collection(db, "tags");
+    const q = query(tagsRef, where("userId", "==", uid));
+    const snapshot = await getDocs(q);
+    const tags = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      name: doc.data().name as string,
+    }));
+    return tags;
+  } catch (error) {
+    console.error("Erro ao obter tags:", error);
+    throw error;
+  }
+};
+
+export const addTag = async (uid: string, tagName: string) => {
+  try {
+    const existingTags = await getTags(uid);
+    const tagExists = existingTags.some(
+      (tag) => tag.name.toLowerCase() === tagName.toLowerCase(),
+    );
+    if (tagExists) {
+      throw new Error("Tag já existente");
+    }
+
+    const tagsRef = collection(db, "tags");
+
+    const docRef = await addDoc(tagsRef, {
+      userId: uid,
+      name: tagName,
+    });
+
+    return {
+      id: docRef.id,
+      name: tagName,
+    };
+  } catch (error) {
+    console.error("Erro ao adicionar tag:", error);
+    throw error;
+  }
+};
+
+export const deleteTag = async (uid: string, tagId: string) => {
+  try {
+    const tagRef = doc(db, "tags", tagId);
+    await deleteDoc(tagRef);
+  } catch (error) {
+    console.error("Erro ao deletar tag:", error);
+    throw error;
+  }
 };

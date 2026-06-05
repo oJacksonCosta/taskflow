@@ -26,7 +26,7 @@ export default function Home() {
         <div className="flex flex-col flex-wrap justify-center gap-4 md:flex-row">
           <Button
             variant={"default"}
-            className="bg-default hover:bg-default-hover w-fit text-black dark:text-white"
+            className="bg-default hover:bg-default-hover w-fit cursor-pointer text-black dark:text-white"
             onClick={() => {
               redirect("/register", RedirectType.push);
             }}
@@ -39,9 +39,9 @@ export default function Home() {
             onClick={() => {
               redirect("/login", RedirectType.push);
             }}
-            className="text-black dark:text-white"
+            className="cursor-pointer text-black dark:text-white"
           >
-            Já tenho uma conta
+            Já tem uma conta?
           </Button>
         </div>
       </section>
