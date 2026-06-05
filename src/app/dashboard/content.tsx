@@ -9,7 +9,7 @@ import { type DateRange } from "react-day-picker";
 import { BiCard } from "react-icons/bi";
 import { CgCalendarTwo } from "react-icons/cg";
 import { HiPlus } from "react-icons/hi";
-import { HiOutlineTag } from "react-icons/hi2";
+import { HiOutlineTag } from "react-icons/hi";
 import { IoSearch } from "react-icons/io5";
 import { TbLayoutKanban, TbLogout } from "react-icons/tb";
 
@@ -70,10 +70,10 @@ import createAvatar from "@/lib/avatar";
 import { Note } from "@/types";
 
 const status = [
-  { value: "todo", label: "A Fazer" },
+  { value: "to-do", label: "A Fazer" },
   { value: "in-progress", label: "Em Andamento" },
   { value: "review", label: "Em Revisão" },
-  { value: "done", label: "Concluído" },
+  { value: "concluded", label: "Concluído" },
 ];
 
 const type = [
@@ -87,7 +87,7 @@ const priority = [
   { value: "low", label: "Baixa" },
 ];
 
-const tags = ["Pessoal", "Trabalho", "Estudos", "Compras", "Outros"];
+const tags = ["Pessoal", "Trabalho", "Estudos", "Compras", "Outros", "Teste"];
 
 export default function Content() {
   const { user, loading, logout, handleUpdateName, updateNameLoading } =
@@ -260,8 +260,14 @@ export default function Content() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction variant="destructive" onClick={logout}>
+                <AlertDialogCancel className="cursor-pointer">
+                  Cancelar
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={logout}
+                  className="cursor-pointer"
+                >
                   Sair
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -294,6 +300,7 @@ export default function Content() {
                     placeholder="Tipo"
                     showClear
                     className="w-full"
+                    disabled={!!selectedPriority || !!selectedStatus}
                   />
                   <ComboboxContent>
                     <ComboboxList>

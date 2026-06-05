@@ -9,6 +9,18 @@ import { Note } from "@/types";
 
 const notesRef = collection(db, "notes");
 
+const convertToDate = (value: any): Date | null => {
+  if (!value) return null;
+  if (typeof value.toDate === "function") {
+    return value.toDate();
+  }
+  if (value.seconds !== undefined) {
+    return new Date(value.seconds * 1000);
+  }
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? null : date;
+};
+
 export const getNotes = async (
   uid: string,
   filters: {
@@ -31,21 +43,13 @@ export const getNotes = async (
     id: doc.id,
     uid: doc.data().userId,
     title: doc.data().title,
-    content: doc.data().content,
+    content: doc.data().content || "",
     type: doc.data().type,
     status:
       doc.data()?.status === "todo" ? "to-do" : doc.data()?.status || null,
     priority: doc.data()?.priority || null,
-    term: doc.data().term
-      ? doc.data().term.toDate()
-      : doc.data().term
-        ? new Date(doc.data().term)
-        : null,
-    date: doc.data().date?.toDate
-      ? doc.data().date.toDate()
-      : doc.data().date
-        ? new Date(doc.data().date)
-        : null,
+    term: convertToDate(doc.data().term),
+    date: convertToDate(doc.data().date) || new Date(),
     tags: doc.data()?.tags || [],
   }));
 
