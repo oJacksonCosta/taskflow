@@ -61,7 +61,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import NoteCard from "@/components/ui/note-card";
 import {
@@ -71,6 +71,7 @@ import {
 } from "@/components/ui/popover";
 import { Spinner } from "@/components/ui/spinner";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 
 // Firebase / Services
 import { getNotes, getTags, addTag, deleteTag } from "@/firebase/firestore";
@@ -134,6 +135,21 @@ export default function Content() {
   const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
   const [newTag, setNewTag] = useState("");
   const [addTagLoading, setAddTagLoading] = useState(false);
+
+  // Nova tarefa/anotação
+  const [createType, setCreateType] = useState<{
+    value: string;
+    label: string;
+  } | null>(null);
+  const [createPriority, setCreatePriority] = useState<{
+    value: string;
+    label: string;
+  } | null>(null);
+  const [createTags, setCreateTags] = useState<string[]>([]);
+  const [createTitle, setCreateTitle] = useState("");
+  const [createContent, setCreateContent] = useState("");
+  const [createTerm, setCreateTerm] = useState<Date | null>(null);
+  const [createTermOpen, setCreateTermOpen] = useState(false);
 
   const anchor = useComboboxAnchor();
 
@@ -542,7 +558,8 @@ export default function Content() {
           <section className="relative w-full overflow-y-auto pb-25">
             {/* Barra de ações */}
             <div className="bg-muted fixed right-1/2 bottom-10 flex translate-x-1/2 items-center gap-2 rounded-xl p-2 shadow-xl">
-              <Dialog>
+              {/* Tags */}
+              <Dialog modal={false}>
                 <DialogTrigger asChild>
                   <Button className="bg-default hover:bg-default-hover h-12 w-12 cursor-pointer rounded-lg text-white shadow-md transition-all duration-200 ease-in-out hover:-translate-y-1">
                     <HiOutlineTag className="size-5" />
@@ -603,9 +620,171 @@ export default function Content() {
                 </DialogContent>
               </Dialog>
 
-              <Button className="bg-default hover:bg-default-hover h-12 w-12 cursor-pointer rounded-lg text-white shadow-md transition-all duration-200 ease-in-out hover:-translate-y-1">
-                <HiPlus className="size-5" />
-              </Button>
+              {/* Nova nota ou tarefa */}
+              <Dialog modal={false}>
+                <DialogTrigger asChild>
+                  <Button className="bg-default hover:bg-default-hover h-12 w-12 cursor-pointer rounded-lg text-white shadow-md transition-all duration-200 ease-in-out hover:-translate-y-1">
+                    <HiPlus className="size-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Nova anotação</DialogTitle>
+                    <DialogDescription>
+                      Crie uma nova anotação ou tarefa
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <form action="" className="flex flex-col gap-2">
+                    {/* Tipo */}
+                    <Combobox
+                      items={type}
+                      value={createType}
+                      onValueChange={setCreateType}
+                    >
+                      <ComboboxInput
+                        placeholder="Tipo"
+                        showClear
+                        className="w-full"
+                      />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          {type.map((item) => (
+                            <ComboboxItem key={item.value} value={item}>
+                              {item.label}
+                            </ComboboxItem>
+                          ))}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+
+                    {/* Prioridade */}
+                    <Combobox
+                      items={priority}
+                      value={createPriority}
+                      onValueChange={setCreatePriority}
+                    >
+                      <ComboboxInput
+                        placeholder="Prioridade"
+                        showClear
+                        className="w-full"
+                        disabled={createType?.value !== "task"}
+                      />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          {priority.map((item) => (
+                            <ComboboxItem key={item.value} value={item}>
+                              {item.label}
+                            </ComboboxItem>
+                          ))}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+
+                    {/* Tags */}
+                    <div className="col-span-full">
+                      <Combobox
+                        multiple
+                        autoHighlight
+                        items={tags.map((tag) => tag.name)}
+                        value={createTags}
+                        onValueChange={setCreateTags}
+                      >
+                        <ComboboxChips
+                          ref={anchor}
+                          className="w-full overflow-hidden"
+                        >
+                          <ComboboxValue>
+                            {(values) => (
+                              <React.Fragment>
+                                {values.map((value: string) => (
+                                  <ComboboxChip key={value}>
+                                    {value}
+                                  </ComboboxChip>
+                                ))}
+                                <ComboboxChipsInput placeholder="Tags" />
+                              </React.Fragment>
+                            )}
+                          </ComboboxValue>
+                        </ComboboxChips>
+                        <ComboboxContent anchor={anchor}>
+                          <ComboboxEmpty>Nenhuma opção</ComboboxEmpty>
+                          <ComboboxList>
+                            {(item) => (
+                              <ComboboxItem key={item} value={item}>
+                                {item}
+                              </ComboboxItem>
+                            )}
+                          </ComboboxList>
+                        </ComboboxContent>
+                      </Combobox>
+                    </div>
+
+                    {/* Prazo */}
+                    <FieldGroup className="flex w-full flex-row gap-2">
+                      <Field>
+                        <Popover
+                          open={createTermOpen}
+                          onOpenChange={setCreateTermOpen}
+                        >
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              id="date-picker-optional"
+                              className="justify-between font-normal"
+                              disabled={createType?.value !== "task"}
+                            >
+                              {createTerm
+                                ? format(createTerm, "PPP")
+                                : "Prazo de finalização"}
+
+                              <CgCalendarTwo />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-auto overflow-hidden p-0"
+                            align="start"
+                          >
+                            <Calendar
+                              mode="single"
+                              selected={createTerm!}
+                              captionLayout="dropdown"
+                              onSelect={(createTerm) => {
+                                setCreateTerm(createTerm!);
+                                setCreateTermOpen(false);
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </Field>
+                      <Field className="w-32">
+                        <Input
+                          type="time"
+                          id="time-picker-optional"
+                          step="1"
+                          defaultValue="10:30:00"
+                          className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                          disabled={createType?.value !== "task"}
+                        />
+                      </Field>
+                    </FieldGroup>
+
+                    {/* Título */}
+                    <Input
+                      placeholder="Título"
+                      value={createTitle}
+                      onChange={(e) => setCreateTitle(e.target.value)}
+                    />
+
+                    {/* Conteúdo */}
+                    <Textarea
+                      placeholder="Conteúdo"
+                      value={createContent}
+                      onChange={(e) => setCreateContent(e.target.value)}
+                    />
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
 
             {notes ? (
