@@ -13,6 +13,7 @@ import { HiOutlineTag, HiOutlineTrash } from "react-icons/hi";
 import { IoSearch } from "react-icons/io5";
 import { TbLayoutKanban, TbLogout } from "react-icons/tb";
 import { FiSave } from "react-icons/fi";
+import { BsEmojiSmile } from "react-icons/bs";
 
 // Context
 import { useAuth } from "@/context/auth-contex";
@@ -64,6 +65,7 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import NoteCard from "@/components/ui/note-card";
+import NoteDialog from "@/components/ui/note-dialog";
 import {
   Popover,
   PopoverContent,
@@ -74,7 +76,15 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 
 // Firebase / Services
-import { getNotes, getTags, addTag, deleteTag } from "@/firebase/firestore";
+import {
+  getNotes,
+  getTags,
+  addTag,
+  deleteTag,
+  addNote,
+  updateNote,
+  deleteNote,
+} from "@/firebase/firestore";
 
 // Utils
 import createAvatar from "@/lib/avatar";
@@ -99,6 +109,33 @@ const priority = [
   { value: "high", label: "Alta" },
   { value: "medium", label: "Média" },
   { value: "low", label: "Baixa" },
+];
+
+const popularEmojis = [
+  "😊",
+  "😂",
+  "🥰",
+  "👍",
+  "🔥",
+  "🎉",
+  "🚀",
+  "💡",
+  "📌",
+  "📅",
+  "✅",
+  "❌",
+  "⚠️",
+  "🛠️",
+  "📝",
+  "💻",
+  "🎯",
+  "⏳",
+  "🔒",
+  "🌟",
+  "👀",
+  "👏",
+  "🙌",
+  "💪",
 ];
 
 export default function Content() {
@@ -136,31 +173,32 @@ export default function Content() {
   const [newTag, setNewTag] = useState("");
   const [addTagLoading, setAddTagLoading] = useState(false);
 
-  // Nova tarefa/anotação
-  const [createType, setCreateType] = useState<{
-    value: string;
-    label: string;
-  } | null>(null);
-  const [createPriority, setCreatePriority] = useState<{
-    value: string;
-    label: string;
-  } | null>(null);
-  const [createTags, setCreateTags] = useState<string[]>([]);
-  const [createTitle, setCreateTitle] = useState("");
-  const [createContent, setCreateContent] = useState("");
-  const [createTerm, setCreateTerm] = useState<Date | null>(null);
-  const [createTermOpen, setCreateTermOpen] = useState(false);
+  // Note dialog states
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [dialogLoading, setDialogLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const anchor = useComboboxAnchor();
 
-  const filters = {
-    type: selectedType?.value || "",
-    status: selectedStatus?.value || "",
-    priority: selectedPriority?.value || "",
-    tags: selectedTags || [],
-    dateRange: date || {},
-    searchText: searchText || "",
-  };
+  const filters = React.useMemo(
+    () => ({
+      type: selectedType?.value || "",
+      status: selectedStatus?.value || "",
+      priority: selectedPriority?.value || "",
+      tags: selectedTags || [],
+      dateRange: date || {},
+      searchText: searchText || "",
+    }),
+    [
+      selectedType,
+      selectedStatus,
+      selectedPriority,
+      selectedTags,
+      date,
+      searchText,
+    ],
+  );
 
   // Caso for informado status ou prioridade, altera o tipo para tarefa
   useEffect(() => {
@@ -170,14 +208,20 @@ export default function Content() {
   }, [selectedPriority, selectedStatus]);
 
   useEffect(() => {
+    let active = true;
     if (user?.uid) {
       const fetchNotes = async () => {
         const notes = await getNotes(user.uid, filters);
-        setNotes(notes);
+        if (active) {
+          setNotes(notes);
+        }
       };
 
       fetchNotes();
     }
+    return () => {
+      active = false;
+    };
   }, [filters, user?.uid]);
 
   useEffect(() => {
@@ -232,6 +276,110 @@ export default function Content() {
     } catch (error: any) {
       errorToast("Erro ao deletar tag.");
       console.error("Erro ao deletar tag:", error);
+    }
+  };
+
+  const handleOpenCreateDialog = () => {
+    setSelectedNote(null);
+    setNoteDialogOpen(true);
+  };
+
+  const handleOpenEditDialog = (note: Note) => {
+    setSelectedNote(note);
+    setNoteDialogOpen(true);
+  };
+
+  const handleSaveNote = async (data: {
+    title: string;
+    content: string;
+    type: "note" | "task";
+    status?: string | null;
+    priority?: string | null;
+    term?: Date | null;
+    tags?: string[];
+  }) => {
+    if (!user?.uid) return;
+
+    const trimmedTitle = data.title.trim();
+    if (!trimmedTitle) {
+      errorToast("Por favor, preencha o título.");
+      return;
+    }
+
+    if (!data.type) {
+      errorToast("Por favor, selecione o tipo (Tarefa ou Anotação).");
+      return;
+    }
+
+    setDialogLoading(true);
+    try {
+      if (selectedNote) {
+        // Edit mode
+        const updated = await updateNote(user.uid, selectedNote.id, data);
+        setNotes((prev) => {
+          if (!prev) return null;
+          return prev.map((n) =>
+            n.id === selectedNote.id
+              ? {
+                  ...n,
+                  title: updated.title,
+                  content: updated.content,
+                  type: updated.type,
+                  status: updated.status,
+                  priority: updated.priority,
+                  term: updated.term,
+                  tags: updated.tags,
+                }
+              : n
+          );
+        });
+        sucessToast(
+          data.type === "task"
+            ? "Tarefa atualizada com sucesso!"
+            : "Anotação atualizada com sucesso!",
+        );
+      } else {
+        // Create mode
+        const newNote = await addNote(user.uid, data);
+        setNotes((prev) => (prev ? [newNote, ...prev] : [newNote]));
+        sucessToast(
+          data.type === "task"
+            ? "Tarefa criada com sucesso!"
+            : "Anotação criada com sucesso!",
+        );
+      }
+      setNoteDialogOpen(false);
+      setSelectedNote(null);
+    } catch (error) {
+      console.error("Erro ao salvar nota/tarefa:", error);
+      errorToast("Erro ao salvar. Tente novamente.");
+    } finally {
+      setDialogLoading(false);
+    }
+  };
+
+  const handleDeleteNote = async () => {
+    if (!user?.uid || !selectedNote) return;
+
+    setDeleteLoading(true);
+    try {
+      await deleteNote(user.uid, selectedNote.id);
+      setNotes((prev) => {
+        if (!prev) return null;
+        return prev.filter((n) => n.id !== selectedNote.id);
+      });
+      sucessToast(
+        selectedNote.type === "task"
+          ? "Tarefa excluída com sucesso!"
+          : "Anotação excluída com sucesso!",
+      );
+      setNoteDialogOpen(false);
+      setSelectedNote(null);
+    } catch (error) {
+      console.error("Erro ao excluir nota/tarefa:", error);
+      errorToast("Erro ao excluir. Tente novamente.");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -317,9 +465,10 @@ export default function Content() {
                     onClick={() => handleUpdateName(newName)}
                     disabled={updateNameLoading}
                     variant="secondary"
-                    className="cursor-pointer"
+                    className="cursor-pointer flex items-center gap-1.5"
                     loading={updateNameLoading}
                   >
+                    {!updateNameLoading && <FiSave className="size-4" />}
                     Salvar
                   </Button>
                 </div>
@@ -396,6 +545,18 @@ export default function Content() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          {/* Modal de criação/edição de tarefa/anotação */}
+          <NoteDialog
+            open={noteDialogOpen}
+            onOpenChange={setNoteDialogOpen}
+            note={selectedNote}
+            tags={tags}
+            onSave={handleSaveNote}
+            onDelete={selectedNote ? handleDeleteNote : undefined}
+            loading={dialogLoading}
+            deleteLoading={deleteLoading}
+          />
 
           {/* Filtros */}
           {view === "cards" && (
@@ -621,174 +782,16 @@ export default function Content() {
               </Dialog>
 
               {/* Nova nota ou tarefa */}
-              <Dialog modal={false}>
-                <DialogTrigger asChild>
-                  <Button className="bg-default hover:bg-default-hover h-12 w-12 cursor-pointer rounded-lg text-white shadow-md transition-all duration-200 ease-in-out hover:-translate-y-1">
-                    <HiPlus className="size-5" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Nova anotação</DialogTitle>
-                    <DialogDescription>
-                      Crie uma nova anotação ou tarefa
-                    </DialogDescription>
-                  </DialogHeader>
-
-                  <form action="" className="flex flex-col gap-2">
-                    {/* Tipo */}
-                    <Combobox
-                      items={type}
-                      value={createType}
-                      onValueChange={setCreateType}
-                    >
-                      <ComboboxInput
-                        placeholder="Tipo"
-                        showClear
-                        className="w-full"
-                      />
-                      <ComboboxContent>
-                        <ComboboxList>
-                          {type.map((item) => (
-                            <ComboboxItem key={item.value} value={item}>
-                              {item.label}
-                            </ComboboxItem>
-                          ))}
-                        </ComboboxList>
-                      </ComboboxContent>
-                    </Combobox>
-
-                    {/* Prioridade */}
-                    <Combobox
-                      items={priority}
-                      value={createPriority}
-                      onValueChange={setCreatePriority}
-                    >
-                      <ComboboxInput
-                        placeholder="Prioridade"
-                        showClear
-                        className="w-full"
-                        disabled={createType?.value !== "task"}
-                      />
-                      <ComboboxContent>
-                        <ComboboxList>
-                          {priority.map((item) => (
-                            <ComboboxItem key={item.value} value={item}>
-                              {item.label}
-                            </ComboboxItem>
-                          ))}
-                        </ComboboxList>
-                      </ComboboxContent>
-                    </Combobox>
-
-                    {/* Tags */}
-                    <div className="col-span-full">
-                      <Combobox
-                        multiple
-                        autoHighlight
-                        items={tags.map((tag) => tag.name)}
-                        value={createTags}
-                        onValueChange={setCreateTags}
-                      >
-                        <ComboboxChips
-                          ref={anchor}
-                          className="w-full overflow-hidden"
-                        >
-                          <ComboboxValue>
-                            {(values) => (
-                              <React.Fragment>
-                                {values.map((value: string) => (
-                                  <ComboboxChip key={value}>
-                                    {value}
-                                  </ComboboxChip>
-                                ))}
-                                <ComboboxChipsInput placeholder="Tags" />
-                              </React.Fragment>
-                            )}
-                          </ComboboxValue>
-                        </ComboboxChips>
-                        <ComboboxContent anchor={anchor}>
-                          <ComboboxEmpty>Nenhuma opção</ComboboxEmpty>
-                          <ComboboxList>
-                            {(item) => (
-                              <ComboboxItem key={item} value={item}>
-                                {item}
-                              </ComboboxItem>
-                            )}
-                          </ComboboxList>
-                        </ComboboxContent>
-                      </Combobox>
-                    </div>
-
-                    {/* Prazo */}
-                    <FieldGroup className="flex w-full flex-row gap-2">
-                      <Field>
-                        <Popover
-                          open={createTermOpen}
-                          onOpenChange={setCreateTermOpen}
-                        >
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              id="date-picker-optional"
-                              className="justify-between font-normal"
-                              disabled={createType?.value !== "task"}
-                            >
-                              {createTerm
-                                ? format(createTerm, "PPP")
-                                : "Prazo de finalização"}
-
-                              <CgCalendarTwo />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            className="w-auto overflow-hidden p-0"
-                            align="start"
-                          >
-                            <Calendar
-                              mode="single"
-                              selected={createTerm!}
-                              captionLayout="dropdown"
-                              onSelect={(createTerm) => {
-                                setCreateTerm(createTerm!);
-                                setCreateTermOpen(false);
-                              }}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </Field>
-                      <Field className="w-32">
-                        <Input
-                          type="time"
-                          id="time-picker-optional"
-                          step="1"
-                          defaultValue="10:30:00"
-                          className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                          disabled={createType?.value !== "task"}
-                        />
-                      </Field>
-                    </FieldGroup>
-
-                    {/* Título */}
-                    <Input
-                      placeholder="Título"
-                      value={createTitle}
-                      onChange={(e) => setCreateTitle(e.target.value)}
-                    />
-
-                    {/* Conteúdo */}
-                    <Textarea
-                      placeholder="Conteúdo"
-                      value={createContent}
-                      onChange={(e) => setCreateContent(e.target.value)}
-                    />
-                  </form>
-                </DialogContent>
-              </Dialog>
+              <Button
+                onClick={handleOpenCreateDialog}
+                className="bg-default hover:bg-default-hover h-12 w-12 cursor-pointer rounded-lg text-white shadow-md transition-all duration-200 ease-in-out hover:-translate-y-1"
+              >
+                <HiPlus className="size-5" />
+              </Button>
             </div>
 
             {notes ? (
-              <ViewContent view={view} notes={notes} />
+              <ViewContent view={view} notes={notes} onCardClick={handleOpenEditDialog} />
             ) : (
               <div className="flex flex-1 items-center justify-center">
                 <Spinner className="text-muted-foreground h-6 w-6" />
@@ -802,13 +805,25 @@ export default function Content() {
 }
 
 // Renderização do conteúdo de acordo com a view
-function ViewContent({ view, notes }: { view: string; notes: Note[] }) {
+function ViewContent({
+  view,
+  notes,
+  onCardClick,
+}: {
+  view: string;
+  notes: Note[];
+  onCardClick: (note: Note) => void;
+}) {
   return (
     <section className="min-h-0 flex-1 overflow-hidden p-4 pr-2">
       {view === "cards" && (
         <section className="grid h-full grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
           {notes.map((note) => (
-            <NoteCard key={note.id} note={note} />
+            <NoteCard
+              key={note.id}
+              note={note}
+              onClick={() => onCardClick(note)}
+            />
           ))}
         </section>
       )}

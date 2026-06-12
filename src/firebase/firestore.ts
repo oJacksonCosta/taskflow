@@ -7,6 +7,7 @@ import {
   where,
   addDoc,
   deleteDoc,
+  updateDoc,
   serverTimestamp,
   doc,
 } from "firebase/firestore";
@@ -154,6 +155,107 @@ export const deleteTag = async (uid: string, tagId: string) => {
     await deleteDoc(tagRef);
   } catch (error) {
     console.error("Erro ao deletar tag:", error);
+    throw error;
+  }
+};
+
+export const addNote = async (
+  uid: string,
+  noteData: {
+    title: string;
+    content: string;
+    type: "note" | "task";
+    status?: string | null;
+    priority?: string | null;
+    term?: Date | null;
+    tags?: string[];
+  },
+) => {
+  try {
+    const isTask = noteData.type === "task";
+    const dataToSave = {
+      userId: uid,
+      title: noteData.title,
+      content: noteData.content,
+      type: noteData.type,
+      status: isTask ? (noteData.status || "to-do") : null,
+      priority: isTask ? (noteData.priority || null) : null,
+      term: isTask ? (noteData.term || null) : null,
+      tags: noteData.tags || [],
+      date: new Date(),
+    };
+
+    const docRef = await addDoc(notesRef, dataToSave);
+
+    return {
+      id: docRef.id,
+      uid,
+      title: dataToSave.title,
+      content: dataToSave.content,
+      type: dataToSave.type,
+      status: dataToSave.status,
+      priority: dataToSave.priority,
+      term: dataToSave.term,
+      tags: dataToSave.tags,
+      date: dataToSave.date,
+    };
+  } catch (error) {
+    console.error("Erro ao adicionar nota/tarefa:", error);
+    throw error;
+  }
+};
+
+export const updateNote = async (
+  uid: string,
+  noteId: string,
+  noteData: {
+    title: string;
+    content: string;
+    type: "note" | "task";
+    status?: string | null;
+    priority?: string | null;
+    term?: Date | null;
+    tags?: string[];
+  },
+) => {
+  try {
+    const isTask = noteData.type === "task";
+    const dataToSave = {
+      title: noteData.title,
+      content: noteData.content,
+      type: noteData.type,
+      status: isTask ? (noteData.status || "to-do") : null,
+      priority: isTask ? (noteData.priority || null) : null,
+      term: isTask ? (noteData.term || null) : null,
+      tags: noteData.tags || [],
+    };
+
+    const noteRef = doc(db, "notes", noteId);
+    await updateDoc(noteRef, dataToSave);
+
+    return {
+      id: noteId,
+      uid,
+      title: dataToSave.title,
+      content: dataToSave.content,
+      type: dataToSave.type,
+      status: dataToSave.status,
+      priority: dataToSave.priority,
+      term: dataToSave.term,
+      tags: dataToSave.tags,
+    };
+  } catch (error) {
+    console.error("Erro ao atualizar nota/tarefa:", error);
+    throw error;
+  }
+};
+
+export const deleteNote = async (uid: string, noteId: string) => {
+  try {
+    const noteRef = doc(db, "notes", noteId);
+    await deleteDoc(noteRef);
+  } catch (error) {
+    console.error("Erro ao deletar nota/tarefa:", error);
     throw error;
   }
 };

@@ -111,7 +111,7 @@ function getPortugueseType(type: string) {
   }
 }
 
-export default function NoteCard({ note }: NoteCardProps) {
+export default function NoteCard({ note, onClick }: NoteCardProps) {
   const getDeadlineStatus = () => {
     if (!note.term || note.status === "concluded") return "normal";
 
@@ -134,6 +134,7 @@ export default function NoteCard({ note }: NoteCardProps) {
 
   return (
     <div
+      onClick={onClick}
       className={`flex h-[280px] cursor-pointer flex-col overflow-hidden rounded-2xl p-0.5 shadow-md ${getTaskPriority(note.priority!).bgColor}`}
     >
       {note.type === "task" && (
