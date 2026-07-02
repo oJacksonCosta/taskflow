@@ -251,7 +251,7 @@ export default function NoteDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
-        <DialogContent className="max-h-[90dvh] overflow-y-auto">
+        <DialogContent className="custom-scrollbar max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {note
@@ -487,7 +487,7 @@ export default function NoteDialog({
                     </PopoverTrigger>
                     <PopoverContent className="w-64 p-3" align="start">
                       <p className="text-muted-foreground mb-2 text-xs font-semibold">
-                        Emojis populares
+                        Emojis
                       </p>
                       <div className="grid grid-cols-6 gap-1.5">
                         {popularEmojis.map((emoji) => (

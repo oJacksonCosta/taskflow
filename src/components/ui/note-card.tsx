@@ -135,7 +135,7 @@ export default function NoteCard({ note, onClick }: NoteCardProps) {
   return (
     <div
       onClick={onClick}
-      className={`flex h-[280px] cursor-pointer flex-col overflow-hidden rounded-2xl p-0.5 shadow-md ${getTaskPriority(note.priority!).bgColor}`}
+      className={`flex h-[280px] w-full min-w-[200px] cursor-pointer flex-col overflow-hidden rounded-2xl p-0.5 shadow-md ${getTaskPriority(note.priority!).bgColor}`}
     >
       {note.type === "task" && (
         <div className="flex items-center justify-center gap-1 p-0.5">
@@ -173,21 +173,25 @@ export default function NoteCard({ note, onClick }: NoteCardProps) {
             ))}
           </div>
         )}
-        <div className="flex shrink-0 items-center justify-between gap-2">
+        <div className="flex min-w-0 shrink-0 items-center justify-between gap-2">
           {note.status && (
             <div
-              className={`${getTaskStatus(note.status).textColor} ${getTaskStatus(note.status).bgColor} flex w-fit items-center gap-1 rounded-md px-2 py-1`}
+              className={`${getTaskStatus(note.status).textColor} ${getTaskStatus(note.status).bgColor} flex min-w-0 items-center gap-1 rounded-md px-2 py-1`}
             >
-              {getTaskStatus(note.status).icon}
-              <p className="text-xs font-bold">
+              <span className="flex shrink-0 items-center">
+                {getTaskStatus(note.status).icon}
+              </span>
+              <p className="truncate text-xs font-bold">
                 {getTaskStatus(note.status).text}
               </p>
             </div>
           )}
           {note.term && (
-            <div className={`${getTermColor()} flex items-center gap-1`}>
-              <TbHourglassHigh className="size-4" />
-              <p className="text-sm font-semibold">
+            <div
+              className={`${getTermColor()} flex shrink-0 items-center gap-1`}
+            >
+              <TbHourglassHigh className="size-4 shrink-0" />
+              <p className="text-xs font-semibold whitespace-nowrap">
                 {`${note.term.toLocaleDateString("pt-BR")} às ${note.term.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`}
               </p>
             </div>

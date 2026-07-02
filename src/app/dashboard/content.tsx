@@ -67,6 +67,13 @@ import { Input } from "@/components/ui/input";
 import NoteCard from "@/components/ui/note-card";
 import NoteDialog from "@/components/ui/note-dialog";
 import {
+  DragDropProvider,
+  DragOverlay,
+  useDragOperation,
+} from "@dnd-kit/react";
+import { Draggable } from "./draggable";
+import { Droppable } from "./droppable";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -330,7 +337,7 @@ export default function Content() {
                   term: updated.term,
                   tags: updated.tags,
                 }
-              : n
+              : n,
           );
         });
         sucessToast(
@@ -398,7 +405,7 @@ export default function Content() {
             <h1>TaskFlow</h1>
 
             <div className="bg-card flex items-center justify-center rounded-lg p-1">
-              <div className="relative hidden h-9 sm:flex">
+              <div className="relative hidden h-9 lg:flex">
                 <button
                   onClick={() => setView("cards")}
                   className={`${view === "cards" ? "text-white" : "text-muted-foreground"} h9 z-2 flex w-28 cursor-pointer items-center justify-center gap-1 text-sm font-semibold`}
@@ -465,7 +472,7 @@ export default function Content() {
                     onClick={() => handleUpdateName(newName)}
                     disabled={updateNameLoading}
                     variant="secondary"
-                    className="cursor-pointer flex items-center gap-1.5"
+                    className="flex cursor-pointer items-center gap-1.5"
                     loading={updateNameLoading}
                   >
                     {!updateNameLoading && <FiSave className="size-4" />}
@@ -716,7 +723,7 @@ export default function Content() {
               </div>
             </section>
           )}
-          <section className="relative w-full overflow-y-auto pb-25">
+          <section className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden">
             {/* Barra de ações */}
             <div className="bg-muted fixed right-1/2 bottom-10 flex translate-x-1/2 items-center gap-2 rounded-xl p-2 shadow-xl">
               {/* Tags */}
@@ -791,10 +798,16 @@ export default function Content() {
             </div>
 
             {notes ? (
-              <ViewContent view={view} notes={notes} onCardClick={handleOpenEditDialog} />
+              <ViewContent
+                view={view}
+                notes={notes}
+                setNotes={setNotes}
+                onCardClick={handleOpenEditDialog}
+              />
             ) : (
-              <div className="flex flex-1 items-center justify-center">
-                <Spinner className="text-muted-foreground h-6 w-6" />
+              <div className="flex items-center justify-center gap-2 p-4">
+                <Spinner className="text-muted-foreground h-5 w-5" />
+                <p className="text-muted-foreground">Carregando notas...</p>
               </div>
             )}
           </section>
@@ -808,16 +821,22 @@ export default function Content() {
 function ViewContent({
   view,
   notes,
+  setNotes,
   onCardClick,
 }: {
   view: string;
   notes: Note[];
+  setNotes: React.Dispatch<React.SetStateAction<Note[] | null>>;
   onCardClick: (note: Note) => void;
 }) {
   return (
-    <section className="min-h-0 flex-1 overflow-hidden p-4 pr-2">
+    <section
+      className={`flex min-h-0 flex-1 flex-col pt-4 pr-2 pl-4 ${
+        view === "cards" ? "overflow-y-auto pb-28" : "overflow-hidden pb-4"
+      }`}
+    >
       {view === "cards" && (
-        <section className="grid h-full grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
+        <section className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {notes.map((note) => (
             <NoteCard
               key={note.id}
@@ -829,10 +848,147 @@ function ViewContent({
       )}
 
       {view === "board" && (
-        <section className="h-full overflow-y-auto">
-          <h1>Quadro</h1>
-        </section>
+        <BoardView
+          notes={notes}
+          setNotes={setNotes}
+          onCardClick={onCardClick}
+        />
       )}
     </section>
+  );
+}
+
+function BoardView({
+  notes,
+  setNotes,
+  onCardClick,
+}: {
+  notes: Note[];
+  setNotes: React.Dispatch<React.SetStateAction<Note[] | null>>;
+  onCardClick: (note: Note) => void;
+}) {
+  const { user } = useAuth();
+
+  const handleDragEnd = async (event: any) => {
+    if (event.canceled) return;
+    const { source, target } = event.operation;
+    if (!source || !target) return;
+
+    const noteId = source.id;
+    const newStatus = target.id;
+
+    const noteToUpdate = notes.find((n) => n.id === noteId);
+    if (!noteToUpdate || noteToUpdate.status === newStatus) return;
+
+    setNotes((prev) => {
+      if (!prev) return null;
+      return prev.map((n) =>
+        n.id === noteId ? { ...n, status: newStatus } : n,
+      );
+    });
+
+    try {
+      if (!user?.uid) return;
+      await updateNote(user.uid, noteId, {
+        title: noteToUpdate.title,
+        content: noteToUpdate.content,
+        type: noteToUpdate.type as "note" | "task",
+        status: newStatus,
+        priority: noteToUpdate.priority,
+        term: noteToUpdate.term,
+        tags: noteToUpdate.tags,
+      });
+      sucessToast("Situação da tarefa atualizada!");
+    } catch (error) {
+      console.error("Erro ao atualizar situação da tarefa:", error);
+      errorToast("Erro ao atualizar situação da tarefa.");
+
+      setNotes((prev) => {
+        if (!prev) return null;
+        return prev.map((n) =>
+          n.id === noteId ? { ...n, status: noteToUpdate.status } : n,
+        );
+      });
+    }
+  };
+
+  return (
+    <DragDropProvider onDragEnd={handleDragEnd}>
+      <BoardColumns notes={notes} onCardClick={onCardClick} />
+    </DragDropProvider>
+  );
+}
+
+const COLUMNS = [
+  { id: "to-do", title: "A Fazer", color: "bg-default" },
+  { id: "in-progress", title: "Em Andamento", color: "bg-yellow-500" },
+  { id: "review", title: "Em Revisão", color: "bg-orange-500" },
+  { id: "concluded", title: "Concluído", color: "bg-emerald-500" },
+];
+
+function BoardColumns({
+  notes,
+  onCardClick,
+}: {
+  notes: Note[];
+  onCardClick: (note: Note) => void;
+}) {
+  const { source } = useDragOperation();
+  const activeNote = source ? notes.find((n) => n.id === source.id) : null;
+
+  const tasks = notes.filter((n) => n.type === "task");
+
+  return (
+    <>
+      <div className="flex min-h-0 w-full flex-1 gap-4 select-none">
+        {COLUMNS.map((column) => {
+          const columnTasks = tasks.filter((task) => task.status === column.id);
+
+          return (
+            <div
+              key={column.id}
+              className="flex min-h-0 w-0 min-w-0 flex-1 flex-col rounded-2xl border border-black/5 bg-slate-50/50 p-3 dark:border-white/5 dark:bg-zinc-900/50"
+            >
+              <div className="mb-3 flex shrink-0 items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${column.color}`}
+                  />
+                  <h3 className="text-foreground text-sm font-bold">
+                    {column.title}
+                  </h3>
+                </div>
+                <span className="text-muted-foreground rounded-md bg-black/5 px-2 py-0.5 text-xs font-semibold dark:bg-white/10">
+                  {columnTasks.length}
+                </span>
+              </div>
+
+              <Droppable
+                id={column.id}
+                className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1"
+              >
+                {columnTasks.length === 0 ? (
+                  <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center rounded-xl border-2 border-dashed border-black/5 bg-black/5 p-4 text-center text-xs dark:border-white/5 dark:bg-white/5">
+                    Nenhuma tarefa
+                  </div>
+                ) : (
+                  columnTasks.map((task) => (
+                    <Draggable key={task.id} id={task.id}>
+                      <NoteCard note={task} onClick={() => onCardClick(task)} />
+                    </Draggable>
+                  ))
+                )}
+              </Droppable>
+            </div>
+          );
+        })}
+      </div>
+
+      <DragOverlay>
+        {activeNote ? (
+          <NoteCard note={activeNote} onClick={() => onCardClick(activeNote)} />
+        ) : null}
+      </DragOverlay>
+    </>
   );
 }

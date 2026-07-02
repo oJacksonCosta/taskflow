@@ -178,9 +178,9 @@ export const addNote = async (
       title: noteData.title,
       content: noteData.content,
       type: noteData.type,
-      status: isTask ? (noteData.status || "to-do") : null,
-      priority: isTask ? (noteData.priority || null) : null,
-      term: isTask ? (noteData.term || null) : null,
+      status: isTask ? noteData.status || "to-do" : null,
+      priority: isTask ? noteData.priority || null : null,
+      term: isTask ? noteData.term || null : null,
       tags: noteData.tags || [],
       date: new Date(),
     };
@@ -224,9 +224,9 @@ export const updateNote = async (
       title: noteData.title,
       content: noteData.content,
       type: noteData.type,
-      status: isTask ? (noteData.status || "to-do") : null,
-      priority: isTask ? (noteData.priority || null) : null,
-      term: isTask ? (noteData.term || null) : null,
+      status: isTask ? noteData.status || "to-do" : null,
+      priority: isTask ? noteData.priority || null : null,
+      term: isTask ? noteData.term || null : null,
       tags: noteData.tags || [],
     };
 
