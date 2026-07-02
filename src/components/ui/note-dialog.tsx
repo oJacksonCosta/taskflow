@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 
 // Icons
@@ -153,8 +153,9 @@ export default function NoteDialog({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const anchor = useComboboxAnchor();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Reset form or populate with note data when modal opens
+  // Reseta o formulário ou preenche com os dados da anotação quando o modal abre
   useEffect(() => {
     if (open) {
       if (note) {
@@ -203,10 +204,25 @@ export default function NoteDialog({
     }
   }, [formPriority, formStatus]);
 
+  // Ajusta a altura da textarea de acordo com o conteúdo
+  useEffect(() => {
+    if (open) {
+      const adjustHeight = () => {
+        if (textareaRef.current) {
+          textareaRef.current.style.height = "auto";
+          textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+      };
+
+      adjustHeight();
+
+      const timer = setTimeout(adjustHeight, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [formContent, open]);
+
   const insertEmoji = (emoji: string) => {
-    const textarea = document.getElementById(
-      "note-content-textarea",
-    ) as HTMLTextAreaElement;
+    const textarea = textareaRef.current;
     if (textarea) {
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
@@ -242,7 +258,8 @@ export default function NoteDialog({
       content: formContent,
       type: formType?.value as "note" | "task",
       status: formType?.value === "task" ? formStatus?.value || "to-do" : null,
-      priority: formType?.value === "task" ? formPriority?.value || null : null,
+      priority:
+        formType?.value === "task" ? formPriority?.value || "medium" : null,
       term: termDate,
       tags: formTags,
     });
@@ -268,6 +285,61 @@ export default function NoteDialog({
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+            {/* Título */}
+            <Field className="gap-1.5">
+              <FieldLabel className="text-xs">Título</FieldLabel>
+              <Input
+                placeholder="Título"
+                value={formTitle}
+                onChange={(e) => setFormTitle(e.target.value)}
+              />
+            </Field>
+
+            {/* Conteúdo com Seletor de Emoji */}
+            <Field className="gap-1.5">
+              <FieldLabel className="text-xs">Conteúdo</FieldLabel>
+              <div className="bg-background border-input focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 relative flex flex-col rounded-md border shadow-xs transition-[color,box-shadow] focus-within:ring-[3px]">
+                <textarea
+                  ref={textareaRef}
+                  id="note-content-textarea"
+                  placeholder="Conteúdo"
+                  value={formContent}
+                  onChange={(e) => setFormContent(e.target.value)}
+                  className="placeholder:text-muted-foreground flex min-h-[120px] w-full resize-none border-0 bg-transparent px-3 py-2 text-base outline-none focus:ring-0 focus:outline-none md:text-sm"
+                />
+                <div className="flex items-center justify-between border-t border-black/10 px-3 py-1.5 dark:border-white/10">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-foreground h-8 w-8 cursor-pointer rounded-md p-0 hover:bg-black/5 dark:hover:bg-white/5"
+                      >
+                        <BsEmojiSmile className="size-4.5" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-3" align="start">
+                      <p className="text-muted-foreground mb-2 text-xs font-semibold">
+                        Emojis
+                      </p>
+                      <div className="grid grid-cols-6 gap-1.5">
+                        {popularEmojis.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => insertEmoji(emoji)}
+                            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-lg transition-transform hover:bg-black/5 active:scale-90 dark:hover:bg-white/5"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            </Field>
+
             {/* Tipo e Prioridade */}
             <FieldGroup className="flex w-full flex-row gap-2">
               {/* Tipo */}
@@ -312,7 +384,6 @@ export default function NoteDialog({
                 >
                   <ComboboxInput
                     placeholder="Prioridade"
-                    showClear
                     className="w-full"
                     disabled={formType?.value !== "task"}
                   />
@@ -344,7 +415,6 @@ export default function NoteDialog({
                 >
                   <ComboboxInput
                     placeholder="Situação"
-                    showClear
                     className="w-full"
                     disabled={formType?.value !== "task"}
                   />
@@ -452,60 +522,6 @@ export default function NoteDialog({
                 />
               </Field>
             </FieldGroup>
-
-            {/* Título */}
-            <Field className="gap-1.5">
-              <FieldLabel className="text-xs">Título</FieldLabel>
-              <Input
-                placeholder="Título"
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-              />
-            </Field>
-
-            {/* Conteúdo com Seletor de Emoji */}
-            <Field className="gap-1.5">
-              <FieldLabel className="text-xs">Conteúdo</FieldLabel>
-              <div className="bg-background border-input focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 relative flex flex-col rounded-md border shadow-xs transition-[color,box-shadow] focus-within:ring-[3px]">
-                <textarea
-                  id="note-content-textarea"
-                  placeholder="Conteúdo"
-                  value={formContent}
-                  onChange={(e) => setFormContent(e.target.value)}
-                  className="placeholder:text-muted-foreground flex min-h-[150px] w-full resize-none border-0 bg-transparent px-3 py-2 text-base outline-none focus:ring-0 focus:outline-none md:text-sm"
-                />
-                <div className="flex items-center justify-between border-t border-black/10 px-3 py-1.5 dark:border-white/10">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-foreground h-8 w-8 cursor-pointer rounded-md p-0 hover:bg-black/5 dark:hover:bg-white/5"
-                      >
-                        <BsEmojiSmile className="size-4.5" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-64 p-3" align="start">
-                      <p className="text-muted-foreground mb-2 text-xs font-semibold">
-                        Emojis
-                      </p>
-                      <div className="grid grid-cols-6 gap-1.5">
-                        {popularEmojis.map((emoji) => (
-                          <button
-                            key={emoji}
-                            type="button"
-                            onClick={() => insertEmoji(emoji)}
-                            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-lg transition-transform hover:bg-black/5 active:scale-90 dark:hover:bg-white/5"
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            </Field>
 
             <DialogFooter className="mt-4 flex flex-row items-center justify-between gap-2 sm:justify-between">
               {note && onDelete ? (
