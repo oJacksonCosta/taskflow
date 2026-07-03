@@ -13,7 +13,7 @@ import { HiOutlineTag, HiOutlineTrash } from "react-icons/hi";
 import { IoSearch } from "react-icons/io5";
 import { TbLayoutKanban, TbLogout } from "react-icons/tb";
 import { FiSave } from "react-icons/fi";
-import { BsEmojiSmile } from "react-icons/bs";
+import { LuNotebook } from "react-icons/lu";
 
 // Context
 import { useAuth } from "@/context/auth-contex";
@@ -80,7 +80,6 @@ import {
 } from "@/components/ui/popover";
 import { Spinner } from "@/components/ui/spinner";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 
 // Firebase / Services
 import {
@@ -770,7 +769,11 @@ export default function Content() {
                       <Separator className="mb-2" />
                     </div>
 
-                    {tags && (
+                    {tags.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">
+                        Nenhuma tag encontrada
+                      </p>
+                    ) : (
                       <div className="flex flex-wrap gap-1">
                         {tags.map((tag, index) => (
                           <div
@@ -832,19 +835,32 @@ function ViewContent({
   return (
     <section
       className={`flex min-h-0 flex-1 flex-col pt-4 pr-2 pl-4 ${
-        view === "cards" ? "overflow-y-auto pb-28" : "overflow-hidden pb-4"
+        view === "cards"
+          ? "custom-scrollbar overflow-y-auto pb-28"
+          : "overflow-hidden pb-4"
       }`}
     >
       {view === "cards" && (
-        <section className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {notes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note}
-              onClick={() => onCardClick(note)}
-            />
-          ))}
-        </section>
+        <>
+          {notes.length === 0 ? (
+            <div className="mx-auto flex h-full w-fit flex-col items-center justify-center gap-2 p-4">
+              <LuNotebook className="text-muted-foreground size-10" />
+              <p className="text-muted-foreground font-semibold">
+                Nenhuma nota/tarefa encontrada
+              </p>
+            </div>
+          ) : (
+            <section className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {notes.map((note) => (
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  onClick={() => onCardClick(note)}
+                />
+              ))}
+            </section>
+          )}
+        </>
       )}
 
       {view === "board" && (
@@ -940,7 +956,7 @@ function BoardColumns({
 
   return (
     <>
-      <div className="flex min-h-0 w-full flex-1 gap-4 select-none">
+      <div className="flex min-h-0 w-full flex-1 gap-2 select-none">
         {COLUMNS.map((column) => {
           const columnTasks = tasks.filter((task) => task.status === column.id);
 

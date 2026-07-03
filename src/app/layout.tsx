@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import { Montserrat, Quicksand } from "next/font/google";
 
 // Libraries
 import { Toaster } from "react-hot-toast";
@@ -12,6 +12,10 @@ import { ThemeProvider } from "@/context/theme-context";
 import "./globals.css";
 
 const montserrat = Montserrat({
+  subsets: ["latin"],
+});
+
+const quicksand = Quicksand({
   subsets: ["latin"],
 });
 
@@ -34,7 +38,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-br" suppressHydrationWarning>
-      <body className={`${montserrat.className} antialiased`} suppressHydrationWarning>
+      <body
+        className={`${quicksand.className} antialiased`}
+        suppressHydrationWarning
+      >
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>

@@ -173,30 +173,32 @@ export default function NoteCard({ note, onClick }: NoteCardProps) {
             ))}
           </div>
         )}
-        <div className="flex min-w-0 shrink-0 items-center justify-between gap-2">
-          {note.status && (
-            <div
-              className={`${getTaskStatus(note.status).textColor} ${getTaskStatus(note.status).bgColor} flex min-w-0 items-center gap-1 rounded-md px-2 py-1`}
-            >
-              <span className="flex shrink-0 items-center">
-                {getTaskStatus(note.status).icon}
-              </span>
-              <p className="truncate text-xs font-bold">
-                {getTaskStatus(note.status).text}
-              </p>
-            </div>
-          )}
-          {note.term && (
-            <div
-              className={`${getTermColor()} flex shrink-0 items-center gap-1`}
-            >
-              <TbHourglassHigh className="size-4 shrink-0" />
-              <p className="text-xs font-semibold whitespace-nowrap">
-                {`${note.term.toLocaleDateString("pt-BR")} às ${note.term.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`}
-              </p>
-            </div>
-          )}
-        </div>
+        {note.type === "task" && (
+          <div className="flex min-w-0 shrink-0 items-center justify-between gap-2">
+            {note.status && (
+              <div
+                className={`${getTaskStatus(note.status).textColor} ${getTaskStatus(note.status).bgColor} flex min-w-0 items-center gap-1 rounded-md px-2 py-1`}
+              >
+                <span className="flex shrink-0 items-center">
+                  {getTaskStatus(note.status).icon}
+                </span>
+                <p className="truncate text-xs font-bold">
+                  {getTaskStatus(note.status).text}
+                </p>
+              </div>
+            )}
+            {note.term && (
+              <div
+                className={`${getTermColor()} flex shrink-0 items-center gap-1`}
+              >
+                <TbHourglassHigh className="size-4 shrink-0" />
+                <p className="text-xs font-semibold whitespace-nowrap">
+                  {`${note.term.toLocaleDateString("pt-BR")} às ${note.term.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

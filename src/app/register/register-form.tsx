@@ -99,7 +99,7 @@ export default function RegisterForm() {
 
   return (
     <>
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md backdrop-blur-md bg-white/75 dark:bg-zinc-900/50 border-slate-200/60 dark:border-zinc-800/50 shadow-2xl transition-all duration-300 hover:border-indigo-500/20">
         <CardHeader>
           <CardTitle>Registre-se</CardTitle>
           <CardDescription>
