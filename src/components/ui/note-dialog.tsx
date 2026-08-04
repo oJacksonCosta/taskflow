@@ -533,7 +533,6 @@ export default function NoteDialog({
                   disabled={loading}
                 >
                   <HiOutlineTrash className="size-4" />
-                  Excluir
                 </Button>
               ) : (
                 <div className="mr-auto" />
@@ -602,7 +601,6 @@ export default function NoteDialog({
                 ) : (
                   <HiOutlineTrash className="size-4" />
                 )}
-                Excluir
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
