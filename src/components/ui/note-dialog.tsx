@@ -397,7 +397,7 @@ export default function NoteDialog({
 
             {/* Badges / Informações de Tarefa */}
             {note.type === "task" && (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="flex flex-wrap gap-2">
                 {/* Prioridade */}
                 {note.priority && (
                   <div className="flex flex-col gap-1">

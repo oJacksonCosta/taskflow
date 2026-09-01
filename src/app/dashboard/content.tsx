@@ -853,8 +853,16 @@ function ViewContent({
             <div className="mx-auto flex h-full w-fit flex-col items-center justify-center gap-2 p-4">
               <LuNotebook className="text-muted-foreground size-10" />
               <p className="text-muted-foreground font-semibold">
-                Nenhuma nota/tarefa encontrada
+                Nenhuma nota ou tarefa encontrada
               </p>
+              <div className="-mt-1 flex items-center gap-1">
+                <p className="text-muted-foreground text-sm">
+                  Adicione sua primeira anotação no
+                </p>
+                <div className="bg-card text-muted-foreground flex h-6 w-6 items-center justify-center rounded-sm">
+                  <HiPlus className="size-4" />
+                </div>
+              </div>
             </div>
           ) : (
             <section className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
