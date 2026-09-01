@@ -6,7 +6,16 @@ import { format } from "date-fns";
 
 // Icons
 import { CgCalendarTwo } from "react-icons/cg";
-import { HiOutlineTrash } from "react-icons/hi";
+import {
+  HiOutlineTrash,
+  HiFlag,
+  HiOutlineClock,
+  HiDotsHorizontal,
+  HiOutlineTag,
+} from "react-icons/hi";
+import { FaPenAlt } from "react-icons/fa";
+import { PiChecksBold, PiEyeBold } from "react-icons/pi";
+import { TbHourglassHigh } from "react-icons/tb";
 import { BsEmojiSmile } from "react-icons/bs";
 import { FiSave } from "react-icons/fi";
 
@@ -61,8 +70,8 @@ interface NoteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   note: Note | null;
-  tags: { id: string; name: string }[];
-  onSave: (data: {
+  tags?: { id: string; name: string }[];
+  onSave?: (data: {
     title: string;
     content: string;
     type: "note" | "task";
@@ -72,8 +81,91 @@ interface NoteDialogProps {
     tags?: string[];
   }) => Promise<void>;
   onDelete?: () => Promise<void>;
-  loading: boolean;
-  deleteLoading: boolean;
+  loading?: boolean;
+  deleteLoading?: boolean;
+  readOnly?: boolean;
+}
+
+function getTaskPriority(priority: string) {
+  switch (priority) {
+    case "high":
+      return {
+        text: "Alta",
+        textColor: "text-red-500",
+        bgColor: "bg-red-500/20",
+        borderColor: "border-red-500",
+        icon: <HiFlag className="size-4" />,
+      };
+    case "medium":
+      return {
+        text: "Média",
+        textColor: "text-orange-500",
+        bgColor: "bg-orange-500/20",
+        borderColor: "border-orange-500",
+        icon: <HiFlag className="size-4" />,
+      };
+    case "low":
+      return {
+        text: "Baixa",
+        textColor: "text-emerald-500",
+        bgColor: "bg-emerald-500/20",
+        borderColor: "border-emerald-500",
+        icon: <HiFlag className="size-4" />,
+      };
+    default:
+      return {
+        text: "Tarefa",
+        textColor: "text-default",
+        bgColor: "bg-default/20",
+        borderColor: "border-default",
+        icon: <HiFlag className="size-4" />,
+      };
+  }
+}
+
+function getTaskStatus(status: string) {
+  switch (status) {
+    case "to-do":
+      return {
+        text: "A Fazer",
+        textColor: "text-default",
+        bgColor: "bg-default/20",
+        borderColor: "border-default",
+        icon: <HiOutlineClock className="size-4" />,
+      };
+    case "in-progress":
+      return {
+        text: "Em Andamento",
+        textColor: "text-yellow-500",
+        bgColor: "bg-yellow-500/20",
+        borderColor: "border-yellow-500",
+        icon: <HiDotsHorizontal className="size-4" />,
+      };
+    case "review":
+      return {
+        text: "Em Revisão",
+        textColor: "text-orange-500",
+        bgColor: "bg-orange-500/20",
+        borderColor: "border-orange-500",
+        icon: <PiEyeBold className="size-4" />,
+      };
+    case "concluded":
+      return {
+        text: "Concluído",
+        textColor: "text-emerald-500",
+        bgColor: "bg-emerald-500/20",
+        borderColor: "border-emerald-500",
+        icon: <PiChecksBold className="size-4" />,
+      };
+    default:
+      return {
+        text: "Tarefa",
+        textColor: "text-default",
+        bgColor: "bg-default/20",
+        borderColor: "border-default",
+        icon: <HiOutlineClock className="size-4" />,
+      };
+  }
 }
 
 const statusOptions = [
@@ -125,11 +217,12 @@ export default function NoteDialog({
   open,
   onOpenChange,
   note,
-  tags,
+  tags = [],
   onSave,
   onDelete,
-  loading,
-  deleteLoading,
+  loading = false,
+  deleteLoading = false,
+  readOnly = false,
 }: NoteDialogProps) {
   const [formType, setFormType] = useState<{
     value: string;
@@ -244,6 +337,8 @@ export default function NoteDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!onSave) return;
+
     let termDate: Date | null = null;
     if (formType?.value === "task" && formTerm) {
       termDate = new Date(formTerm);
@@ -264,6 +359,114 @@ export default function NoteDialog({
       tags: formTags,
     });
   };
+
+  if (readOnly && note) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
+        <DialogContent className="custom-scrollbar max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader className="-mb-2">
+            <div className="flex items-center gap-2">
+              {note.type === "task" ? (
+                <span className="bg-default/10 text-default flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold">
+                  <HiFlag className="size-3.5" />
+                  Tarefa
+                </span>
+              ) : (
+                <span className="bg-default/10 text-default flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold">
+                  <FaPenAlt className="size-3" />
+                  Anotação
+                </span>
+              )}
+            </div>
+            <DialogTitle className="text-left text-xl font-bold break-words">
+              {note.title}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 py-2">
+            {/* Conteúdo */}
+            <div className="flex flex-col gap-1.5">
+              <div className="bg-muted/40 text-foreground min-h-[120px] rounded-md border border-black/10 p-3 text-sm leading-relaxed break-words whitespace-pre-wrap dark:border-white/10">
+                {note.content || (
+                  <span className="text-muted-foreground italic">
+                    Nenhum conteúdo informado.
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Badges / Informações de Tarefa */}
+            {note.type === "task" && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {/* Prioridade */}
+                {note.priority && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground text-xs font-semibold">
+                      Prioridade
+                    </span>
+                    <div
+                      className={`${getTaskPriority(note.priority).textColor} ${getTaskPriority(note.priority).bgColor} flex w-fit items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-bold`}
+                    >
+                      {getTaskPriority(note.priority).icon}
+                      {getTaskPriority(note.priority).text}
+                    </div>
+                  </div>
+                )}
+
+                {/* Situação */}
+                {note.status && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground text-xs font-semibold">
+                      Situação
+                    </span>
+                    <div
+                      className={`${getTaskStatus(note.status).textColor} ${getTaskStatus(note.status).bgColor} flex w-fit items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-bold`}
+                    >
+                      {getTaskStatus(note.status).icon}
+                      {getTaskStatus(note.status).text}
+                    </div>
+                  </div>
+                )}
+
+                {/* Prazo */}
+                {note.term && (
+                  <div className="col-span-full flex flex-col gap-1">
+                    <span className="text-muted-foreground text-xs font-semibold">
+                      Prazo de finalização
+                    </span>
+                    <div className="text-primary flex items-center gap-1.5 text-sm font-medium">
+                      <TbHourglassHigh className="size-4 shrink-0" />
+                      {`${new Date(note.term).toLocaleDateString("pt-BR")} às ${new Date(note.term).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tags */}
+            {note.tags && note.tags.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-muted-foreground text-xs font-semibold">
+                  Tags
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {note.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="bg-muted text-muted-foreground flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold"
+                    >
+                      <HiOutlineTag className="size-3.5" />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <>

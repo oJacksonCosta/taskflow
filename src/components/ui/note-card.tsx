@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 // Types
 import { Note } from "@/types";
 
@@ -9,6 +11,7 @@ import {
   HiOutlineClock,
   HiOutlineTag,
   HiDotsHorizontal,
+  HiOutlineArrowsExpand,
 } from "react-icons/hi";
 import { FaPenAlt } from "react-icons/fa";
 import { PiChecksBold, PiEyeBold } from "react-icons/pi";
@@ -16,10 +19,12 @@ import { TbHourglassHigh } from "react-icons/tb";
 
 // Components
 import { Separator } from "./separator";
+import NoteDialog from "./note-dialog";
 
 interface NoteCardProps {
   note: Note;
   onClick?: () => void;
+  onExpand?: () => void;
 }
 
 function getTaskPriority(priority: string) {
@@ -111,7 +116,9 @@ function getPortugueseType(type: string) {
   }
 }
 
-export default function NoteCard({ note, onClick }: NoteCardProps) {
+export default function NoteCard({ note, onClick, onExpand }: NoteCardProps) {
+  const [isExpandOpen, setIsExpandOpen] = useState(false);
+
   const getDeadlineStatus = () => {
     if (!note.term || note.status === "concluded") return "normal";
 
@@ -133,73 +140,102 @@ export default function NoteCard({ note, onClick }: NoteCardProps) {
   };
 
   return (
-    <div
-      onClick={onClick}
-      className={`flex h-[280px] w-full min-w-[200px] cursor-pointer flex-col overflow-hidden rounded-2xl p-0.5 shadow-md ${getTaskPriority(note.priority!).bgColor}`}
-    >
-      {note.type === "task" && (
-        <div className="flex items-center justify-center gap-1 p-0.5">
-          <HiFlag className="size-4" />
-          <p className="shrink-0 text-xs font-semibold">
-            PRIORIDADE {getTaskPriority(note.priority!).text.toUpperCase()}
-          </p>
-        </div>
-      )}
-
-      {note.type === "note" && (
-        <div className="flex items-center justify-center gap-1 p-0.5">
-          <FaPenAlt className="size-3.5" />
-          <p className="shrink-0 text-xs font-semibold">ANOTAÇÃO</p>
-        </div>
-      )}
-      <div className="bg-card flex min-h-0 flex-1 flex-col gap-2 rounded-2xl p-4">
-        <h2 className="font-bold">{note.title}</h2>
-
-        <Separator className="shrink-0" />
-
-        <p className="text-muted-foreground flex-1 overflow-hidden text-sm whitespace-pre-wrap">
-          {note.content}
-        </p>
-        {note.tags && note.tags.length > 0 && (
-          <div className="mt-1 line-clamp-2 flex shrink-0 flex-wrap gap-1 overflow-hidden">
-            {note.tags.map((tag) => (
-              <span
-                key={tag}
-                className="bg-muted text-muted-foreground inline-flex items-center gap-1 rounded-md px-2 py-1"
-              >
-                <HiOutlineTag className="text-muted-foreground size-3.5" />
-                <span className="text-xs font-semibold">{tag}</span>
-              </span>
-            ))}
-          </div>
-        )}
+    <>
+      <div
+        onClick={onClick}
+        className={`flex h-[280px] w-full min-w-[200px] cursor-pointer flex-col overflow-hidden rounded-2xl p-0.5 shadow-md ${getTaskPriority(note.priority!).bgColor}`}
+      >
         {note.type === "task" && (
-          <div className="flex min-w-0 shrink-0 items-center justify-between gap-2">
-            {note.status && (
-              <div
-                className={`${getTaskStatus(note.status).textColor} ${getTaskStatus(note.status).bgColor} flex min-w-0 items-center gap-1 rounded-md px-2 py-1`}
-              >
-                <span className="flex shrink-0 items-center">
-                  {getTaskStatus(note.status).icon}
-                </span>
-                <p className="truncate text-xs font-bold">
-                  {getTaskStatus(note.status).text}
-                </p>
-              </div>
-            )}
-            {note.term && (
-              <div
-                className={`${getTermColor()} flex shrink-0 items-center gap-1`}
-              >
-                <TbHourglassHigh className="size-4 shrink-0" />
-                <p className="text-xs font-semibold whitespace-nowrap">
-                  {`${note.term.toLocaleDateString("pt-BR")} às ${note.term.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`}
-                </p>
-              </div>
-            )}
+          <div className="flex items-center justify-center gap-1 p-0.5">
+            <HiFlag className="size-4" />
+            <p className="shrink-0 text-xs font-semibold">
+              PRIORIDADE {getTaskPriority(note.priority!).text.toUpperCase()}
+            </p>
           </div>
         )}
+
+        {note.type === "note" && (
+          <div className="flex items-center justify-center gap-1 p-0.5">
+            <FaPenAlt className="size-3.5" />
+            <p className="shrink-0 text-xs font-semibold">ANOTAÇÃO</p>
+          </div>
+        )}
+        <div className="bg-card flex min-h-0 flex-1 flex-col gap-2 rounded-2xl p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-bold line-clamp-1 flex-1 break-all">
+              {note.title}
+            </h2>
+            <button
+              type="button"
+              title="Expandir"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onExpand) {
+                  onExpand();
+                } else {
+                  setIsExpandOpen(true);
+                }
+              }}
+              className="text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 flex shrink-0 cursor-pointer items-center justify-center rounded-md p-1 transition-colors"
+            >
+              <HiOutlineArrowsExpand className="size-4" />
+            </button>
+          </div>
+
+          <Separator className="shrink-0" />
+
+          <p className="text-muted-foreground flex-1 overflow-hidden text-sm whitespace-pre-wrap">
+            {note.content}
+          </p>
+          {note.tags && note.tags.length > 0 && (
+            <div className="mt-1 line-clamp-2 flex shrink-0 flex-wrap gap-1 overflow-hidden">
+              {note.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="bg-muted text-muted-foreground inline-flex items-center gap-1 rounded-md px-2 py-1"
+                >
+                  <HiOutlineTag className="text-muted-foreground size-3.5" />
+                  <span className="text-xs font-semibold">{tag}</span>
+                </span>
+              ))}
+            </div>
+          )}
+          {note.type === "task" && (
+            <div className="flex min-w-0 shrink-0 items-center justify-between gap-2">
+              {note.status && (
+                <div
+                  className={`${getTaskStatus(note.status).textColor} ${getTaskStatus(note.status).bgColor} flex min-w-0 items-center gap-1 rounded-md px-2 py-1`}
+                >
+                  <span className="flex shrink-0 items-center">
+                    {getTaskStatus(note.status).icon}
+                  </span>
+                  <p className="truncate text-xs font-bold">
+                    {getTaskStatus(note.status).text}
+                  </p>
+                </div>
+              )}
+              {note.term && (
+                <div
+                  className={`${getTermColor()} flex shrink-0 items-center gap-1`}
+                >
+                  <TbHourglassHigh className="size-4 shrink-0" />
+                  <p className="text-xs font-semibold whitespace-nowrap">
+                    {`${note.term.toLocaleDateString("pt-BR")} às ${note.term.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      <NoteDialog
+        open={isExpandOpen}
+        onOpenChange={setIsExpandOpen}
+        note={note}
+        readOnly
+      />
+    </>
   );
 }
+
