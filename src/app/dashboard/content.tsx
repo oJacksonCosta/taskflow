@@ -14,6 +14,7 @@ import { IoSearch } from "react-icons/io5";
 import { TbLayoutKanban, TbLogout } from "react-icons/tb";
 import { FiSave } from "react-icons/fi";
 import { LuNotebook } from "react-icons/lu";
+import Image from "next/image";
 
 // Context
 import { useAuth } from "@/context/auth-contex";
@@ -400,8 +401,14 @@ export default function Content() {
 
       {user && (
         <main className="flex h-dvh w-dvw flex-col overflow-hidden">
-          <header className="flex items-center justify-between border-b-1 border-black/10 px-6 py-2 dark:border-white/10">
-            <h1>TaskFlow</h1>
+          <header className="flex items-center justify-between border-b-1 border-black/10 px-4 py-2 dark:border-white/10">
+            <Image
+              src="logo.svg"
+              alt="Logo"
+              width={120}
+              height={50}
+              className=""
+            />
 
             <div className="bg-card flex items-center justify-center rounded-lg p-1">
               <div className="relative hidden h-9 lg:flex">

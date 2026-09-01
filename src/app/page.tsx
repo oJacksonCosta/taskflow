@@ -4,6 +4,7 @@ import { redirect, RedirectType } from "next/navigation";
 
 // Libraries
 import { FaArrowCircleRight } from "react-icons/fa";
+import Image from "next/image";
 
 // Components
 import { Button } from "@/components/ui/button";
@@ -17,16 +18,8 @@ export default function Home() {
 
       <section className="relative z-10 flex max-w-3xl flex-col items-center justify-center gap-6 text-center">
         {/* Badge Indicator */}
-        <div className="text-default animate-fade-in inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-xs font-semibold backdrop-blur-md dark:text-indigo-400">
-          🚀 Produtividade Simplificada
-        </div>
 
-        <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 md:text-6xl dark:text-white">
-          Bem-vindo ao{" "}
-          <span className="from-default bg-gradient-to-r to-purple-500 bg-clip-text font-black text-transparent">
-            TaskFlow!
-          </span>
-        </h1>
+        <Image src="logo.svg" alt="Logo" width={250} height={50} className="" />
 
         <p className="w-11/12 max-w-2xl text-center text-base leading-relaxed text-slate-600 md:text-lg dark:text-slate-300">
           Anote suas ideias, organize suas tarefas, defina prazos e mantenha sua
