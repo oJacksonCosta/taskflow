@@ -386,7 +386,7 @@ export default function NoteDialog({
           <div className="flex flex-col gap-4 py-2">
             {/* Conteúdo */}
             <div className="flex flex-col gap-1.5">
-              <div className="bg-muted/40 text-foreground min-h-[120px] rounded-md border border-black/10 p-3 text-sm leading-relaxed break-words whitespace-pre-wrap dark:border-white/10">
+              <div className="bg-muted/40 text-foreground min-h-[120px] rounded-md border border-border p-3 text-sm leading-relaxed break-words whitespace-pre-wrap">
                 {note.content || (
                   <span className="text-muted-foreground italic">
                     Nenhum conteúdo informado.
@@ -510,13 +510,13 @@ export default function NoteDialog({
                   onChange={(e) => setFormContent(e.target.value)}
                   className="placeholder:text-muted-foreground flex min-h-[120px] w-full resize-none border-0 bg-transparent px-3 py-2 text-base outline-none focus:ring-0 focus:outline-none md:text-sm"
                 />
-                <div className="flex items-center justify-between border-t border-black/10 px-3 py-1.5 dark:border-white/10">
+                <div className="flex items-center justify-between border-t border-border px-3 py-1.5">
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         type="button"
                         variant="ghost"
-                        className="text-muted-foreground hover:text-foreground h-8 w-8 cursor-pointer rounded-md p-0 hover:bg-black/5 dark:hover:bg-white/5"
+                        className="text-muted-foreground hover:text-foreground h-8 w-8 cursor-pointer rounded-md p-0 hover:bg-accent"
                       >
                         <BsEmojiSmile className="size-4.5" />
                       </Button>
@@ -531,7 +531,7 @@ export default function NoteDialog({
                             key={emoji}
                             type="button"
                             onClick={() => insertEmoji(emoji)}
-                            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-lg transition-transform hover:bg-black/5 active:scale-90 dark:hover:bg-white/5"
+                            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-lg transition-transform hover:bg-accent active:scale-90"
                           >
                             {emoji}
                           </button>

@@ -401,7 +401,7 @@ export default function Content() {
 
       {user && (
         <main className="flex h-dvh w-dvw flex-col overflow-hidden">
-          <header className="flex items-center justify-between border-b-1 border-black/10 px-4 py-2 dark:border-white/10">
+          <header className="flex items-center justify-between border-b border-border bg-card/50 px-4 py-2 backdrop-blur-xs">
             <Image
               src="logo.svg"
               alt="Logo"
@@ -652,7 +652,7 @@ export default function Content() {
             {view === "cards" ? (
               <div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto pb-28">
                 {/* Filtros */}
-                <section className="border-b border-black/10 bg-slate-50/30 p-4 dark:border-white/10 dark:bg-zinc-900/30">
+                <section className="border-b border-border bg-card/60 p-4 dark:bg-zinc-900/30">
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
                     {/* Pesquisa */}
                     <div className="relative h-fit sm:col-span-2 lg:col-span-2">
@@ -997,7 +997,7 @@ function BoardColumns({
           return (
             <div
               key={column.id}
-              className="flex min-h-0 w-0 min-w-0 flex-1 flex-col rounded-2xl border border-black/5 bg-slate-50/50 p-3 dark:border-white/5 dark:bg-zinc-900/50"
+              className="flex min-h-0 w-0 min-w-0 flex-1 flex-col rounded-2xl border border-border bg-card/80 p-3 shadow-xs dark:bg-zinc-900/50"
             >
               <div className="mb-3 flex shrink-0 items-center justify-between px-1">
                 <div className="flex items-center gap-2">
@@ -1008,7 +1008,7 @@ function BoardColumns({
                     {column.title}
                   </h3>
                 </div>
-                <span className="text-muted-foreground rounded-md bg-black/5 px-2 py-0.5 text-xs font-semibold dark:bg-white/10">
+                <span className="text-muted-foreground rounded-md bg-muted px-2 py-0.5 text-xs font-semibold dark:bg-white/10">
                   {columnTasks.length}
                 </span>
               </div>
@@ -1018,7 +1018,7 @@ function BoardColumns({
                 className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1"
               >
                 {columnTasks.length === 0 ? (
-                  <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center rounded-xl border-2 border-dashed border-black/5 bg-black/5 p-4 text-center text-xs dark:border-white/5 dark:bg-white/5">
+                  <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/40 p-4 text-center text-xs dark:bg-white/5">
                     Nenhuma tarefa
                   </div>
                 ) : (

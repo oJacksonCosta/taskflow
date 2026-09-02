@@ -146,7 +146,7 @@ export default function NoteCard({ note, onClick, onExpand }: NoteCardProps) {
         className={`flex h-[280px] w-full min-w-[200px] cursor-pointer flex-col overflow-hidden rounded-2xl p-0.5 shadow-md ${getTaskPriority(note.priority!).bgColor}`}
       >
         {note.type === "task" && (
-          <div className="flex items-center justify-center gap-1 p-0.5">
+          <div className="flex items-center justify-center gap-1 p-0.5 text-white">
             <HiFlag className="size-4" />
             <p className="shrink-0 text-xs font-semibold">
               PRIORIDADE {getTaskPriority(note.priority!).text.toUpperCase()}
@@ -155,14 +155,14 @@ export default function NoteCard({ note, onClick, onExpand }: NoteCardProps) {
         )}
 
         {note.type === "note" && (
-          <div className="flex items-center justify-center gap-1 p-0.5">
+          <div className="flex items-center justify-center gap-1 p-0.5 text-white">
             <FaPenAlt className="size-3.5" />
             <p className="shrink-0 text-xs font-semibold">ANOTAÇÃO</p>
           </div>
         )}
         <div className="bg-card flex min-h-0 flex-1 flex-col gap-2 rounded-2xl p-4">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="font-bold line-clamp-1 flex-1 break-all">
+            <h2 className="line-clamp-1 flex-1 font-bold break-all">
               {note.title}
             </h2>
             <button
@@ -176,7 +176,7 @@ export default function NoteCard({ note, onClick, onExpand }: NoteCardProps) {
                   setIsExpandOpen(true);
                 }
               }}
-              className="text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 flex shrink-0 cursor-pointer items-center justify-center rounded-md p-1 transition-colors"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent flex shrink-0 cursor-pointer items-center justify-center rounded-md p-1 transition-colors"
             >
               <HiOutlineArrowsExpand className="size-4" />
             </button>
@@ -238,4 +238,3 @@ export default function NoteCard({ note, onClick, onExpand }: NoteCardProps) {
     </>
   );
 }
-
