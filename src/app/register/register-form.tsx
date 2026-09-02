@@ -1,5 +1,20 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+// Libraries
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { BsGithub, BsGoogle } from "react-icons/bs";
+
+// Context
+import { useAuth } from "@/context/auth-contex";
+
+// Firebase / Services
+import { auth } from "@/firebase/firebase-config";
+
+// Components
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -10,60 +25,96 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { User } from "@/types";
+import { Separator } from "@/components/ui/separator";
 
-import { redirect, RedirectType } from "next/navigation";
-import { auth } from "@/firebase/firebase-config";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+// Utils
+import { errorToast, sucessToast } from "@/lib/toast";
 
 export default function RegisterForm() {
-  const handleRegister = (e: React.FormEvent<HTMLFormElement>) => {
+  const [registerLoading, setRegisterLoading] = useState(false);
+
+  const router = useRouter();
+  const { googleLogin, googleLoading, githubLogin, githubLoading } = useAuth();
+
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setRegisterLoading(true);
 
     const formData = new FormData(e.currentTarget);
+    const username = formData.get("username") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirm-password") as string;
 
-    const username: string = formData.get("username") as string;
-    const email: string = formData.get("email") as string;
-    const password: string = formData.get("password") as string;
-    const confirmPassword: string = formData.get("confirmPassword") as string;
-
-    if (
-      username === "" ||
-      email === "" ||
-      password === "" ||
-      confirmPassword === ""
-    ) {
-      window.alert("Por favor, preencha todos os campos");
+    if (!username || !email || !password || !confirmPassword) {
+      errorToast("Por favor, preencha todos os campos");
+      setRegisterLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
-      window.alert("As senhas não são iguais");
+      errorToast("As senhas não coincidem");
+      setRegisterLoading(false);
       return;
     }
 
-    createUserWithEmailAndPassword(auth, email, password as string)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        window.alert(`Usuário ${user} registrado com sucesso!`);
-        redirect("/login", RedirectType.push);
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.error(`Erro ao registrar: ${errorCode} - ${errorMessage}`);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+      const user = userCredential.user;
+
+      await updateProfile(user, {
+        displayName: username,
       });
+
+      sucessToast("Conta criada com sucesso!");
+
+      router.push("/login");
+    } catch (error: any) {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      console.error(`Erro ao registrar: ${errorCode} - ${errorMessage}`);
+
+      switch (errorCode) {
+        case "auth/email-already-in-use":
+          errorToast("Este e-mail já está em uso");
+          break;
+        case "auth/invalid-email":
+          errorToast("O e-mail fornecido é inválido");
+          break;
+        case "auth/password-does-not-meet-requirements":
+          errorToast("A senha deve ter no mínimo 6 caracteres");
+          break;
+        default:
+          errorToast(`Erro ao cadastrar: ${errorMessage}`);
+          break;
+      }
+    } finally {
+      setRegisterLoading(false);
+    }
   };
 
   return (
     <>
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md backdrop-blur-md bg-white/75 dark:bg-zinc-900/50 border-slate-200/60 dark:border-zinc-800/50 shadow-2xl transition-all duration-300 hover:border-indigo-500/20">
         <CardHeader>
           <CardTitle>Registre-se</CardTitle>
           <CardDescription>
-            Crie uma conta para começar a utilizar o Anota!
+            Cadastre-se para começar a utilizar o TaskFlow!
           </CardDescription>
+
+          <CardAction>
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/login")}
+              className="cursor-pointer"
+            >
+              Entrar
+            </Button>
+          </CardAction>
         </CardHeader>
         <CardContent>
           <form
@@ -71,30 +122,69 @@ export default function RegisterForm() {
             onSubmit={handleRegister}
             id="register-form"
           >
-            <Input placeholder="João da Silva" type="text" name="username" />
-            <Input placeholder="joao@example.com" type="email" name="email" />
-            <Input placeholder="********" type="password" name="password" />
-            <Input placeholder="********" type="password" name="password" />
+            <Input
+              placeholder="João da Silva"
+              type="text"
+              name="username"
+              disabled={registerLoading || googleLoading || githubLoading}
+            />
+            <Input
+              placeholder="joao@example.com"
+              type="email"
+              name="email"
+              disabled={registerLoading || googleLoading || githubLoading}
+            />
+            <Input
+              placeholder="******"
+              type="password"
+              name="password"
+              disabled={registerLoading || googleLoading || githubLoading}
+            />
+            <Input
+              placeholder="******"
+              type="password"
+              name="confirm-password"
+              disabled={registerLoading || googleLoading || githubLoading}
+            />
           </form>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col gap-2">
           <CardAction>
-            <Button variant="default" type="submit" form="register-form">
-              Registrar
+            <Button
+              variant="default"
+              type="submit"
+              form="register-form"
+              loading={registerLoading}
+              disabled={registerLoading || googleLoading || githubLoading}
+              className="bg-default hover:bg-default-hover cursor-pointer text-white"
+            >
+              {registerLoading ? "Carregando..." : "Registrar"}
             </Button>
           </CardAction>
+
+          <Separator className="mt-2 mb-2" />
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={googleLogin}
+              disabled={googleLoading}
+              className="cursor-pointer"
+            >
+              <BsGoogle /> Google
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={githubLogin}
+              disabled={githubLoading}
+              className="cursor-pointer"
+            >
+              <BsGithub /> GitHub
+            </Button>
+          </div>
         </CardFooter>
       </Card>
-
-      <div className="flex items-center">
-        <p className="text-sm text-slate-400">Já possui uma conta? </p>
-        <Button
-          variant="link"
-          onClick={() => redirect("/login", RedirectType.push)}
-        >
-          Entrar
-        </Button>
-      </div>
     </>
   );
 }

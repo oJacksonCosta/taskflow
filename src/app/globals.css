@@ -39,6 +39,11 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-default: #7580ff;
+  --color-default-hover: #616be3;
+  --color-background-light: #ffffff;
+  --color-background-dark: #0a0a0a;
 }
 
 :root {
@@ -74,8 +79,6 @@
   --sidebar-accent-foreground: #171717;
   --sidebar-border: #e5e5e5;
   --sidebar-ring: #a1a1a1;
-
-  --default: #9e86ff;
 }
 
 .dark {
@@ -120,3 +123,83 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--muted-foreground);
+  border-radius: 0.5rem;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background-color: var(--secondary);
+  border-radius: 0.5rem;
+}
+
+/* Background Patterns & Animations */
+@keyframes float-slow-1 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+}
+
+@keyframes float-slow-2 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1.05);
+  }
+  50% {
+    transform: translate(-40px, 30px) scale(0.9);
+  }
+}
+
+@keyframes float-slow-3 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(0.95);
+  }
+  50% {
+    transform: translate(25px, 25px) scale(1.1);
+  }
+}
+
+.animate-float-1 {
+  animation: float-slow-1 15s infinite ease-in-out;
+}
+
+.animate-float-2 {
+  animation: float-slow-2 18s infinite ease-in-out;
+}
+
+.animate-float-3 {
+  animation: float-slow-3 20s infinite ease-in-out;
+}
+
+.bg-dot-pattern {
+  background-image: radial-gradient(rgba(117, 128, 255, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.dark .bg-dot-pattern {
+  background-image: radial-gradient(rgba(117, 128, 255, 0.08) 1px, transparent 1px);
+}
+
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(to right, rgba(117, 128, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(117, 128, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.dark .bg-grid-pattern {
+  background-image: 
+    linear-gradient(to right, rgba(117, 128, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(117, 128, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+

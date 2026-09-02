@@ -1,9 +1,12 @@
 import { Metadata } from "next";
 
+// Components
+import Content from "./content";
+
 export const metadata: Metadata = {
-  title: "Anota | Dashboard",
+  title: "TaskFlow | Dashboard",
 };
 
 export default function Dashboard() {
-  return <h1 className="font-normal">Dashboard</h1>;
+  return <Content />;
 }
