@@ -571,167 +571,9 @@ export default function Content() {
             deleteLoading={deleteLoading}
           />
 
-          {/* Filtros */}
-          {view === "cards" && (
-            <section className="border-b border-black/10 bg-slate-50/30 p-4 dark:border-white/10 dark:bg-zinc-900/30">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
-                {/* Pesquisa */}
-                <div className="relative h-fit sm:col-span-2 lg:col-span-2">
-                  <Input
-                    type="search"
-                    className="w-full pl-8"
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    placeholder="Pesquisar..."
-                  />
-                  <IoSearch className="text-muted-foreground absolute top-1/2 left-2.5 -translate-y-1/2" />
-                </div>
-
-                {/* Tipo */}
-                <Combobox
-                  items={type}
-                  value={selectedType}
-                  onValueChange={setSelectedType}
-                >
-                  <ComboboxInput
-                    placeholder="Tipo"
-                    showClear
-                    className="w-full"
-                    disabled={!!selectedPriority || !!selectedStatus}
-                  />
-                  <ComboboxContent>
-                    <ComboboxList>
-                      {type.map((item) => (
-                        <ComboboxItem key={item.value} value={item}>
-                          {item.label}
-                        </ComboboxItem>
-                      ))}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-
-                {/* Situação */}
-                <Combobox
-                  items={status}
-                  value={selectedStatus}
-                  onValueChange={setSelectedStatus}
-                >
-                  <ComboboxInput
-                    placeholder="Situação"
-                    showClear
-                    className="w-full"
-                  />
-                  <ComboboxContent>
-                    <ComboboxList>
-                      {status.map((item) => (
-                        <ComboboxItem key={item.value} value={item}>
-                          {item.label}
-                        </ComboboxItem>
-                      ))}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-
-                {/* Prioridade */}
-                <Combobox
-                  items={priority}
-                  value={selectedPriority}
-                  onValueChange={setSelectedPriority}
-                >
-                  <ComboboxInput
-                    placeholder="Prioridade"
-                    showClear
-                    className="w-full"
-                  />
-                  <ComboboxContent>
-                    <ComboboxList>
-                      {priority.map((item) => (
-                        <ComboboxItem key={item.value} value={item}>
-                          {item.label}
-                        </ComboboxItem>
-                      ))}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-
-                {/* Data */}
-                <Field className="w-full">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        id="date-picker-range"
-                        className="w-full justify-start overflow-hidden px-2.5 font-normal text-ellipsis whitespace-nowrap"
-                      >
-                        <CgCalendarTwo className="text-muted-foreground size-4.5" />
-                        {date?.from ? (
-                          date.to ? (
-                            <>
-                              {format(date.from, "LLL dd, y")} -{" "}
-                              {format(date.to, "LLL dd, y")}
-                            </>
-                          ) : (
-                            format(date.from, "LLL dd, y")
-                          )
-                        ) : (
-                          <span className="text-muted-foreground">Período</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="range"
-                        defaultMonth={date?.from}
-                        selected={date}
-                        onSelect={setDate}
-                        numberOfMonths={2}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </Field>
-
-                {/* Tags */}
-                <div className="col-span-full">
-                  <Combobox
-                    multiple
-                    autoHighlight
-                    items={tags.map((tag) => tag.name)}
-                    value={selectedTags}
-                    onValueChange={setSelectedTags}
-                  >
-                    <ComboboxChips
-                      ref={anchor}
-                      className="w-full overflow-hidden"
-                    >
-                      <ComboboxValue>
-                        {(values) => (
-                          <React.Fragment>
-                            {values.map((value: string) => (
-                              <ComboboxChip key={value}>{value}</ComboboxChip>
-                            ))}
-                            <ComboboxChipsInput placeholder="Tags" />
-                          </React.Fragment>
-                        )}
-                      </ComboboxValue>
-                    </ComboboxChips>
-                    <ComboboxContent anchor={anchor}>
-                      <ComboboxEmpty>Nenhuma opção</ComboboxEmpty>
-                      <ComboboxList>
-                        {(item) => (
-                          <ComboboxItem key={item} value={item}>
-                            {item}
-                          </ComboboxItem>
-                        )}
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
-                </div>
-              </div>
-            </section>
-          )}
           <section className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden">
             {/* Barra de ações */}
-            <div className="bg-muted fixed right-1/2 bottom-10 flex translate-x-1/2 items-center gap-2 rounded-xl p-2 shadow-xl">
+            <div className="bg-muted fixed right-1/2 bottom-10 z-50 flex translate-x-1/2 items-center gap-2 rounded-xl p-2 shadow-xl">
               {/* Tags */}
               <Dialog modal={false}>
                 <DialogTrigger asChild>
@@ -807,7 +649,184 @@ export default function Content() {
               </Button>
             </div>
 
-            {notes ? (
+            {view === "cards" ? (
+              <div className="custom-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto pb-28">
+                {/* Filtros */}
+                <section className="border-b border-black/10 bg-slate-50/30 p-4 dark:border-white/10 dark:bg-zinc-900/30">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
+                    {/* Pesquisa */}
+                    <div className="relative h-fit sm:col-span-2 lg:col-span-2">
+                      <Input
+                        type="search"
+                        className="w-full pl-8"
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        placeholder="Pesquisar..."
+                      />
+                      <IoSearch className="text-muted-foreground absolute top-1/2 left-2.5 -translate-y-1/2" />
+                    </div>
+
+                    {/* Tipo */}
+                    <Combobox
+                      items={type}
+                      value={selectedType}
+                      onValueChange={setSelectedType}
+                    >
+                      <ComboboxInput
+                        placeholder="Tipo"
+                        showClear
+                        className="w-full"
+                        disabled={!!selectedPriority || !!selectedStatus}
+                      />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          {type.map((item) => (
+                            <ComboboxItem key={item.value} value={item}>
+                              {item.label}
+                            </ComboboxItem>
+                          ))}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+
+                    {/* Situação */}
+                    <Combobox
+                      items={status}
+                      value={selectedStatus}
+                      onValueChange={setSelectedStatus}
+                    >
+                      <ComboboxInput
+                        placeholder="Situação"
+                        showClear
+                        className="w-full"
+                      />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          {status.map((item) => (
+                            <ComboboxItem key={item.value} value={item}>
+                              {item.label}
+                            </ComboboxItem>
+                          ))}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+
+                    {/* Prioridade */}
+                    <Combobox
+                      items={priority}
+                      value={selectedPriority}
+                      onValueChange={setSelectedPriority}
+                    >
+                      <ComboboxInput
+                        placeholder="Prioridade"
+                        showClear
+                        className="w-full"
+                      />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          {priority.map((item) => (
+                            <ComboboxItem key={item.value} value={item}>
+                              {item.label}
+                            </ComboboxItem>
+                          ))}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+
+                    {/* Data */}
+                    <Field className="w-full">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            id="date-picker-range"
+                            className="w-full justify-start overflow-hidden px-2.5 font-normal text-ellipsis whitespace-nowrap"
+                          >
+                            <CgCalendarTwo className="text-muted-foreground size-4.5" />
+                            {date?.from ? (
+                              date.to ? (
+                                <>
+                                  {format(date.from, "LLL dd, y")} -{" "}
+                                  {format(date.to, "LLL dd, y")}
+                                </>
+                              ) : (
+                                format(date.from, "LLL dd, y")
+                              )
+                            ) : (
+                              <span className="text-muted-foreground">
+                                Período
+                              </span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="range"
+                            defaultMonth={date?.from}
+                            selected={date}
+                            onSelect={setDate}
+                            numberOfMonths={2}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </Field>
+
+                    {/* Tags */}
+                    <div className="col-span-full">
+                      <Combobox
+                        multiple
+                        autoHighlight
+                        items={tags.map((tag) => tag.name)}
+                        value={selectedTags}
+                        onValueChange={setSelectedTags}
+                      >
+                        <ComboboxChips
+                          ref={anchor}
+                          className="w-full overflow-hidden"
+                        >
+                          <ComboboxValue>
+                            {(values) => (
+                              <React.Fragment>
+                                {values.map((value: string) => (
+                                  <ComboboxChip key={value}>
+                                    {value}
+                                  </ComboboxChip>
+                                ))}
+                                <ComboboxChipsInput placeholder="Tags" />
+                              </React.Fragment>
+                            )}
+                          </ComboboxValue>
+                        </ComboboxChips>
+                        <ComboboxContent anchor={anchor}>
+                          <ComboboxEmpty>Nenhuma opção</ComboboxEmpty>
+                          <ComboboxList>
+                            {(item) => (
+                              <ComboboxItem key={item} value={item}>
+                                {item}
+                              </ComboboxItem>
+                            )}
+                          </ComboboxList>
+                        </ComboboxContent>
+                      </Combobox>
+                    </div>
+                  </div>
+                </section>
+
+                {notes ? (
+                  <ViewContent
+                    view={view}
+                    notes={notes}
+                    setNotes={setNotes}
+                    onCardClick={handleOpenEditDialog}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center gap-2 p-4">
+                    <Spinner className="text-muted-foreground h-5 w-5" />
+                    <p className="text-muted-foreground">Carregando notas...</p>
+                  </div>
+                )}
+              </div>
+            ) : notes ? (
               <ViewContent
                 view={view}
                 notes={notes}
@@ -841,9 +860,9 @@ function ViewContent({
 }) {
   return (
     <section
-      className={`flex min-h-0 flex-1 flex-col pt-4 pr-2 pl-4 ${
+      className={`flex min-h-0 flex-1 flex-col pt-4 px-4 ${
         view === "cards"
-          ? "custom-scrollbar overflow-y-auto pb-28"
+          ? ""
           : "overflow-hidden pb-4"
       }`}
     >

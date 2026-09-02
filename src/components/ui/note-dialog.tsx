@@ -397,7 +397,7 @@ export default function NoteDialog({
 
             {/* Badges / Informações de Tarefa */}
             {note.type === "task" && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-4">
                 {/* Prioridade */}
                 {note.priority && (
                   <div className="flex flex-col gap-1">
@@ -430,7 +430,7 @@ export default function NoteDialog({
 
                 {/* Prazo */}
                 {note.term && (
-                  <div className="col-span-full flex flex-col gap-1">
+                  <div className="flex w-full flex-col gap-1">
                     <span className="text-muted-foreground text-xs font-semibold">
                       Prazo de finalização
                     </span>
